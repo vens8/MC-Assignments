@@ -21,10 +21,10 @@ data class Stop(
 }
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var btnConvert: Button
     private lateinit var btnNextStop: Button
-    private lateinit var btnSwitch: Button
     private lateinit var tvStops: TextView
+    private lateinit var switchConvert: SwitchMaterial
+    private lateinit var switchLists: SwitchMaterial
 
     private val normalStops = listOf(
         Stop("KRITI NAGAR", 1.4),
@@ -74,18 +74,16 @@ class MainActivity : AppCompatActivity() {
         btnNextStop = findViewById(R.id.btn_next_stop)
         tvStops = findViewById(R.id.tv_stops)
 
-        val stops = if (useLazyStops) lazyStops else normalStops
-
-        val switchConvert = findViewById<SwitchMaterial>(R.id.switch_convert)
-        val switchLists = findViewById<SwitchMaterial>(R.id.switch_lists)
+        switchConvert = findViewById(R.id.switch_convert)
+        switchLists = findViewById(R.id.switch_lists)
 
         switchConvert.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 switchConvert.text = "Miles"
-                displayStopsInMiles(stops)
+                displayStopsInMiles(if (useLazyStops) lazyStops else normalStops)
             } else {
                 switchConvert.text = "KM"
-                displayStopsInKilometers(stops)
+                displayStopsInKilometers(if (useLazyStops) lazyStops else normalStops)
             }
         }
 
@@ -115,10 +113,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun displayStops() {
         val stops = if (useLazyStops) lazyStops else normalStops
-        if (btnConvert.text == "Convert to Miles") {
-            displayStopsInKilometers(stops)
-        } else {
+        if (switchConvert.isChecked) {
             displayStopsInMiles(stops)
+        } else {
+            displayStopsInKilometers(stops)
         }
     }
 
