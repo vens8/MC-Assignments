@@ -4,12 +4,22 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import android.widget.Button
 import android.widget.TextView
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.Card
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.TabRowDefaults.Divider
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.unit.dp
 import com.google.android.material.switchmaterial.SwitchMaterial
 
 data class Stop(
@@ -23,7 +33,7 @@ data class Stop(
 class MainActivity : AppCompatActivity() {
     private lateinit var btnNextStop: Button
     private lateinit var tvStops: TextView
-    private lateinit var switchConvert: SwitchMaterial
+    private lateinit var switchUnits: SwitchMaterial
     private lateinit var switchLists: SwitchMaterial
 
     private val normalStops = listOf(
@@ -72,19 +82,17 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         btnNextStop = findViewById(R.id.btn_next_stop)
-        tvStops = findViewById(R.id.tv_stops)
 
-        switchConvert = findViewById(R.id.switch_convert)
+        switchUnits = findViewById(R.id.switch_units)
         switchLists = findViewById(R.id.switch_lists)
 
-        switchConvert.setOnCheckedChangeListener { _, isChecked ->
+        switchUnits.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
-                switchConvert.text = "Miles"
-                displayStopsInMiles(if (useLazyStops) lazyStops else normalStops)
+                switchUnits.text = "Miles"
             } else {
-                switchConvert.text = "KM"
-                displayStopsInKilometers(if (useLazyStops) lazyStops else normalStops)
+                switchUnits.text = "KM"
             }
+            displayStops()
         }
 
         switchLists.setOnCheckedChangeListener { _, isChecked ->
@@ -106,41 +114,74 @@ class MainActivity : AppCompatActivity() {
         val composeView = findViewById<ComposeView>(R.id.compose_view)
         composeView.setContent {
             Column {
-                StopsList(if (useLazyStops) lazyStops else normalStops)
+                StopsList(if (useLazyStops) lazyStops else normalStops, switchUnits.isChecked)
             }
         }
     }
 
     private fun displayStops() {
-        val stops = if (useLazyStops) lazyStops else normalStops
-        if (switchConvert.isChecked) {
-            displayStopsInMiles(stops)
-        } else {
-            displayStopsInKilometers(stops)
+        val composeView = findViewById<ComposeView>(R.id.compose_view)
+        composeView.setContent {
+            if (useLazyStops) {
+                LazyStopsList(lazyStops, switchUnits.isChecked)
+            } else {
+                StopsList(normalStops, switchUnits.isChecked)
+            }
         }
-    }
-
-    private fun displayStopsInKilometers(stops: List<Stop>) {
-        var text = ""
-        for (stop in stops) {
-            text += "${stop.name}: ${stop.distanceInKm} km\n"
-        }
-        tvStops.text = text
-    }
-
-    private fun displayStopsInMiles(stops: List<Stop>) {
-        var text = ""
-        for (stop in stops) {
-            text += "${stop.name}: ${stop.distanceInMiles} miles\n"
-        }
-        tvStops.text = text
     }
 
     @Composable
-    fun StopsList(stops: List<Stop>) {
+    fun StopsList(stops: List<Stop>, isMiles: Boolean) {
+        Column {
+            for (stop in stops) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    elevation = 4.dp
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(stop.name, style = MaterialTheme.typography.h6)
+                        Text(
+                            text = if (isMiles) "${stop.distanceInMiles} miles" else "${stop.distanceInKm} km",
+                            style = MaterialTheme.typography.subtitle1
+                        )
+                    }
+                }
+                Divider(color = Color.LightGray, thickness = 0.5.dp)
+            }
+        }
+    }
+
+    @Composable
+    fun LazyStopsList(stops: List<Stop>, isMiles: Boolean) {
         LazyColumn {
             items(stops) { stop ->
-                Text(stop.name)
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    elevation = 4.dp
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(stop.name, style = MaterialTheme.typography.h6)
+                        Text(
+                            text = if (isMiles) "${stop.distanceInMiles} miles" else "${stop.distanceInKm} km",
+                            style = MaterialTheme.typography.subtitle1
+                        )
+                    }
+                }
+                Divider(color = Color.LightGray, thickness = 0.5.dp)
             }
         }
     }
