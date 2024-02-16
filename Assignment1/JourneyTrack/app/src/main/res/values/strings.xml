@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">JourneyTrack</string>
+    <string name="journeytracksplash">journeytracksplash</string>
 </resources>

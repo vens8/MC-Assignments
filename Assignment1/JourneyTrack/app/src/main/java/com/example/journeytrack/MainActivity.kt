@@ -99,7 +99,18 @@ class MainActivity : AppCompatActivity() {
         Stop("SARITA VIHAR", 5.1),
         Stop("MOHAN ESTATE", 3.9),
         Stop("TUGHLAKABAD STATION", 2.8),
-        Stop("BADARPUR BORDER", 1.6)
+        Stop("BADARPUR BORDER", 1.6),
+        Stop("SARAI", 2.1),
+        Stop("NHPC CHOWK", 3.5),
+        Stop("MEWALA MAHARAJAPUR", 6.7),
+        Stop("SECTOR-28", 4.2),
+        Stop("BADKAL MOR", 5.6),
+        Stop("OLD FARIDABAD", 2.9),
+        Stop("NEELAM CHOWK AJRONDA", 1.7),
+        Stop("BATA CHOWK", 3.3),
+        Stop("ESCORTS MUJESAR", 2.2),
+        Stop("SANT SURDAS", 6.1),
+        Stop("RAJA NAHAR SINGH", 4.4)
     )
     private var currentStop by mutableIntStateOf(0)
     private var useLazyStops by mutableStateOf(false)
@@ -126,28 +137,31 @@ class MainActivity : AppCompatActivity() {
 
         switchLists.setOnCheckedChangeListener { _, isChecked ->
             currentStop = 0
-            progressState = 0f
             useLazyStops = isChecked
+            updateProgressBar(if (useLazyStops) lazyStops.size else normalStops.size)
             switchLists.text = if (useLazyStops) "Lazy Stops" else "Normal Stops"
             displayStops()
         }
 
         btnNextStop.setOnClickListener {
             val stops = if (useLazyStops) lazyStops else normalStops
-            if (currentStop < stops.size) {
+            Log.d("currentStop", "$currentStop")
+            Log.d("stops.size", "${stops.size}")
+            if (currentStop < stops.size - 1) {
                 currentStop++
                 updateProgressBar(stops.size)
                 displayStops()
-                if (currentStop == stops.size) {
+                if (currentStop == stops.size - 1) {
                     showToast("Yay! You have reached the final stop :)")
                 }
             } else {
                 // Display a message when the user tries to click "Next Stop" after reaching the final stop
-                showToast("You are already at the final stop!")
+                showToast("You are already at the final stop! Reset by toggling stop lists.")
             }
         }
 
         displayStops()
+        updateProgressBar(if (useLazyStops) lazyStops.size else normalStops.size)
 
         val logoView = findViewById<ComposeView>(R.id.logo_view)
         logoView.setContent {
@@ -179,8 +193,12 @@ class MainActivity : AppCompatActivity() {
 
     @Composable
     fun StopsList(stops: List<Stop>, isMiles: Boolean) {
-        var totalDistanceCovered = 0.0
-        var totalDistanceRemaining = 0.0
+        var totalDistanceCovered = calculateTotalDistanceCovered(stops, currentStop, isMiles)
+        var totalDistanceRemaining = calculateTotalDistanceRemaining(stops, currentStop, isMiles)
+        val unit = if (isMiles) "miles" else "km"
+        tvTotalDistanceCovered.text = "Total Distance Covered: ${totalDistanceCovered.round(2)} $unit"
+        tvTotalDistanceRemaining.text = "Total Distance Remaining: ${totalDistanceRemaining.round(2)} $unit"
+
         val scrollState = rememberScrollState()
 
         Box(
@@ -200,7 +218,6 @@ class MainActivity : AppCompatActivity() {
                     StopCard(stop, isMiles, isCurrentStop)
                     Divider(color = Color.LightGray, thickness = 0.5.dp)
                     // Update text views
-                    val unit = if (isMiles) "miles" else "km"
                     tvTotalDistanceCovered.text = "Total Distance Covered: ${totalDistanceCovered.round(2)} $unit"
                     tvTotalDistanceRemaining.text = "Total Distance Remaining: ${totalDistanceRemaining.round(2)} $unit"
                 }
@@ -216,8 +233,12 @@ class MainActivity : AppCompatActivity() {
 
     @Composable
     fun LazyStopsList(stops: List<Stop>, isMiles: Boolean) {
-        var totalDistanceCovered = 0.0
-        var totalDistanceRemaining = 0.0
+        var totalDistanceCovered = calculateTotalDistanceCovered(stops, currentStop, isMiles)
+        var totalDistanceRemaining = calculateTotalDistanceRemaining(stops, currentStop, isMiles)
+        val unit = if (isMiles) "miles" else "km"
+        tvTotalDistanceCovered.text = "Total Distance Covered: ${totalDistanceCovered.round(2)} $unit"
+        tvTotalDistanceRemaining.text = "Total Distance Remaining: ${totalDistanceRemaining.round(2)} $unit"
+
         val listState = rememberLazyListState()
 
         LazyColumn(state = listState) {
@@ -231,7 +252,6 @@ class MainActivity : AppCompatActivity() {
                 StopCard(stop, isMiles, isCurrentStop)
                 Divider(color = Color.LightGray, thickness = 0.5.dp)
                 // Update text views
-                val unit = if (isMiles) "miles" else "km"
                 tvTotalDistanceCovered.text = "Total Distance Covered: ${totalDistanceCovered.round(2)} $unit"
                 tvTotalDistanceRemaining.text = "Total Distance Remaining: ${totalDistanceRemaining.round(2)} $unit"
             }
@@ -285,7 +305,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun calculateTotalDistanceCovered(stops: List<Stop>, currentStop: Int, isMiles: Boolean): Double {
         var totalDistance = 0.0
-        for (i in 0 until currentStop) {
+        for (i in 0..currentStop) {
             totalDistance += if (isMiles) stops[i].distanceInMiles else stops[i].distanceInKm
         }
         return totalDistance
@@ -293,7 +313,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun calculateTotalDistanceRemaining(stops: List<Stop>, currentStop: Int, isMiles: Boolean): Double {
         var totalDistance = 0.0
-        for (i in currentStop until stops.size) {
+        for (i in currentStop + 1 until stops.size) {
             totalDistance += if (isMiles) stops[i].distanceInMiles else stops[i].distanceInKm
         }
         return totalDistance
@@ -316,7 +336,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateProgressBar(totalStops: Int) {
-        progressState = (currentStop.toFloat() / totalStops.toFloat())
+        progressState = ((currentStop.toFloat() + 1) / totalStops.toFloat())
     }
 
     private fun showToast(message: String) {
