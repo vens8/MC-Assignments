@@ -145,8 +145,6 @@ class MainActivity : AppCompatActivity() {
 
         btnNextStop.setOnClickListener {
             val stops = if (useLazyStops) lazyStops else normalStops
-            Log.d("currentStop", "$currentStop")
-            Log.d("stops.size", "${stops.size}")
             if (currentStop < stops.size - 1) {
                 currentStop++
                 updateProgressBar(stops.size)
