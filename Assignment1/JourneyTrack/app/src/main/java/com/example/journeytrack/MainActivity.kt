@@ -1,6 +1,7 @@
 package com.example.journeytrack
 
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import android.widget.Button
 import android.widget.TextView
@@ -39,6 +40,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.google.android.material.switchmaterial.SwitchMaterial
+import android.widget.Toast
 
 data class Stop(
     val name: String,
@@ -136,6 +138,12 @@ class MainActivity : AppCompatActivity() {
                 currentStop++
                 updateProgressBar(stops.size)
                 displayStops()
+                if (currentStop == stops.size) {
+                    showToast("Yay! You have reached the final stop :)")
+                }
+            } else {
+                // Display a message when the user tries to click "Next Stop" after reaching the final stop
+                showToast("You are already at the final stop!")
             }
         }
 
@@ -145,10 +153,9 @@ class MainActivity : AppCompatActivity() {
         logoView.setContent {
             AppLogo()
         }
-
         val progressView = findViewById<ComposeView>(R.id.progress_view)
         progressView.setContent {
-            DisplayContent(stops = if (useLazyStops) lazyStops else normalStops, isMiles = switchUnits.isChecked,  currentStop = currentStop, progressState = progressState)
+            ProgressBar()
         }
 
         val composeView = findViewById<ComposeView>(R.id.compose_view)
@@ -171,35 +178,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     @Composable
-    fun DisplayContent(
-        stops: List<Stop>,
-        isMiles: Boolean,
-        currentStop: Int,
-        progressState: Float
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colors.background)
-        ) {
-            ProgressBar()
-
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
-                    .verticalScroll(rememberScrollState())
-            ) {
-                for (i in stops.indices) {
-                    val stop = stops[i]
-                    StopCard(stop, isMiles, i == currentStop)
-                    Divider(color = Color.LightGray, thickness = 0.5.dp)
-                }
-            }
-        }
-    }
-
-    @Composable
     fun StopsList(stops: List<Stop>, isMiles: Boolean) {
         var totalDistanceCovered = 0.0
         var totalDistanceRemaining = 0.0
@@ -210,11 +188,9 @@ class MainActivity : AppCompatActivity() {
                 .fillMaxSize()
                 .verticalScroll(scrollState)
         ) {
-//            ProgressBar(progressState)  // Display the progress bar
             Column {
                 for (i in stops.indices) {
                     val stop = stops[i]
-                    totalDistanceRemaining += stop.distanceInMiles
 
                     val isCurrentStop = i == currentStop
                     if (isCurrentStop) {
@@ -223,6 +199,10 @@ class MainActivity : AppCompatActivity() {
                     }
                     StopCard(stop, isMiles, isCurrentStop)
                     Divider(color = Color.LightGray, thickness = 0.5.dp)
+                    // Update text views
+                    val unit = if (isMiles) "miles" else "km"
+                    tvTotalDistanceCovered.text = "Total Distance Covered: ${totalDistanceCovered.round(2)} $unit"
+                    tvTotalDistanceRemaining.text = "Total Distance Remaining: ${totalDistanceRemaining.round(2)} $unit"
                 }
             }
         }
@@ -232,12 +212,6 @@ class MainActivity : AppCompatActivity() {
             val scrollPosition = currentStop * 250  // value obtained from trial and error
             scrollState.scrollTo(scrollPosition)
         }
-
-        // Update text views
-        val unit = if (isMiles) "miles" else "km"
-        tvTotalDistanceCovered.text = "Total Distance Covered: ${totalDistanceCovered.round(2)} $unit"
-        tvTotalDistanceRemaining.text = "Total Distance Remaining: ${totalDistanceRemaining.round(2)} $unit"
-
     }
 
     @Composable
@@ -246,11 +220,8 @@ class MainActivity : AppCompatActivity() {
         var totalDistanceRemaining = 0.0
         val listState = rememberLazyListState()
 
-//        ProgressBar(progressState) // Display the progress bar
-
         LazyColumn(state = listState) {
             itemsIndexed(stops) { index, stop ->
-                totalDistanceRemaining += stop.distanceInMiles
 
                 val isCurrentStop = index == currentStop
                 if (isCurrentStop) {
@@ -259,17 +230,16 @@ class MainActivity : AppCompatActivity() {
                 }
                 StopCard(stop, isMiles, isCurrentStop)
                 Divider(color = Color.LightGray, thickness = 0.5.dp)
+                // Update text views
+                val unit = if (isMiles) "miles" else "km"
+                tvTotalDistanceCovered.text = "Total Distance Covered: ${totalDistanceCovered.round(2)} $unit"
+                tvTotalDistanceRemaining.text = "Total Distance Remaining: ${totalDistanceRemaining.round(2)} $unit"
             }
         }
         // Automatically scroll to the current stop
         LaunchedEffect(key1 = currentStop) {
             listState.animateScrollToItem(currentStop)
         }
-        // Update text views
-        val unit = if (isMiles) "miles" else "km"
-        tvTotalDistanceCovered.text = "Total Distance Covered: ${totalDistanceCovered.round(2)} $unit"
-        tvTotalDistanceRemaining.text = "Total Distance Remaining: ${totalDistanceRemaining.round(2)} $unit"
-
     }
 
 
@@ -347,6 +317,10 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateProgressBar(totalStops: Int) {
         progressState = (currentStop.toFloat() / totalStops.toFloat())
+    }
+
+    private fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
     @Composable
