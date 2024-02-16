@@ -2,7 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/linearLayout"
+    android:id="@+id/constraintLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
@@ -42,16 +42,83 @@
         android:text="Next Stop"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="1.0" />
+
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/logo_view"
+        android:layout_width="350dp"
+        android:layout_height="350dp"
+        android:layout_marginStart="21dp"
+        android:layout_marginTop="65dp"
+        android:layout_marginEnd="191dp"
+        android:layout_marginBottom="596dp"
+        android:background="@android:color/transparent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.compose.ui.platform.ComposeView
-        android:id="@+id/compose_view"
-        android:layout_width="363dp"
-        android:layout_height="405dp"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="148dp"
+        android:id="@+id/progress_view"
+        android:layout_width="369dp"
+        android:layout_height="18dp"
+        android:layout_marginStart="21dp"
+        android:layout_marginTop="131dp"
+        android:layout_marginEnd="22dp"
+        android:layout_marginBottom="570dp"
+        android:background="@android:color/transparent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="1.0" />
+
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/compose_view"
+        android:layout_width="369dp"
+        android:layout_height="424dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="14dp"
+        app:layout_constraintBottom_toTopOf="@+id/tv_total_distance_remaining"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="1.0" />
+
+    <TextView
+        android:id="@+id/tv_total_distance_covered"
+        android:layout_width="228dp"
+        android:layout_height="18dp"
+        android:layout_marginStart="93dp"
+        android:layout_marginTop="639dp"
+        android:layout_marginEnd="44dp"
+        android:layout_marginBottom="7dp"
+        android:text=""
+        app:layout_constraintBottom_toTopOf="@+id/btn_next_stop"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="1.0" />
+
+    <TextView
+        android:id="@+id/tv_total_distance_remaining"
+        android:layout_width="228dp"
+        android:layout_height="18dp"
+        android:layout_marginStart="93dp"
+        android:layout_marginTop="612dp"
+        android:layout_marginEnd="90dp"
+        android:layout_marginBottom="9dp"
+        android:text=""
+        app:layout_constraintBottom_toTopOf="@+id/tv_total_distance_covered"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="1.0" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
