@@ -112,14 +112,15 @@ fun Q2Screen(
         topBar = {
             TopAppBar(
                 title = {
-                    Row {
-                        Text(text = "WeatherToGo", style = MaterialTheme.typography.headlineSmall)
-                        Spacer(modifier = Modifier.width(8.dp)) // Add spacer for better positioning
+                    Column {
+                        Text(text = "WeatherToGo?", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = 16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = "Powered by Room Persistence",
                             fontStyle = FontStyle.Italic,
                             fontSize = 12.sp,
-                            color = Color(0xFFFFA500)
+                            color = Color(0xFFFFA500),
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
                         )
                     }
                 },

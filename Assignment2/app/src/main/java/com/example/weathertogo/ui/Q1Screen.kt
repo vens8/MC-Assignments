@@ -106,7 +106,7 @@ fun Q1Screen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = "WeatherToGo", style = MaterialTheme.typography.headlineSmall) },
+                title = { Text(text = "WeatherToGo?", style = MaterialTheme.typography.headlineSmall) },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigate("landingScreen") }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
