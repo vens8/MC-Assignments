@@ -4,28 +4,23 @@ import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.weathertogo.ui.LandingScreen
 import com.example.weathertogo.ui.Q1Screen
+import com.example.weathertogo.ui.Q2Screen
 import com.example.weathertogo.ui.theme.WeatherToGoTheme
-import com.example.weathertogo.viewmodel.WeatherViewModel
-import com.example.weathertogo.viewmodel.WeatherViewModelFactory
+import com.example.weathertogo.viewmodel.WeatherViewModelQ1
+import com.example.weathertogo.viewmodel.WeatherViewModelFactoryQ1
+import com.example.weathertogo.viewmodel.WeatherViewModelFactoryQ2
+import com.example.weathertogo.viewmodel.WeatherViewModelQ2
 
 class MainActivity : ComponentActivity() {
 
@@ -36,7 +31,8 @@ class MainActivity : ComponentActivity() {
             // creating our navController
             val navController = rememberNavController()
 
-            val weatherViewModel: WeatherViewModel = viewModel(factory = WeatherViewModelFactory())
+            val weatherViewModelQ1: WeatherViewModelQ1 = viewModel(factory = WeatherViewModelFactoryQ1())
+            val weatherViewModelQ2: WeatherViewModelQ2 = viewModel(factory = WeatherViewModelFactoryQ2(this))
 
             WeatherToGoTheme {
                 // A surface container using the 'background' color from the theme
@@ -49,10 +45,10 @@ class MainActivity : ComponentActivity() {
                             LandingScreen(navController)
                         }
                         composable("Q1Screen") {
-                            Q1Screen(navController, weatherViewModel)
+                            Q1Screen(navController, weatherViewModelQ1)
                         }
                         composable("Q2Screen") {
-//                            Q1Screen(navController, weatherViewModel)
+                            Q2Screen(navController, weatherViewModelQ2)
                         }
                     }
                 }

@@ -61,6 +61,8 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3") // Update version as needed
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.room.common)
+    implementation(libs.androidx.room.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -4,7 +4,6 @@ import android.os.Build
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -18,7 +17,7 @@ import retrofit2.http.Url
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
-class WeatherViewModel : ViewModel() {
+class WeatherViewModelQ1 : ViewModel() {
     private val _selectedLatitude = MutableLiveData<Double>()
     val selectedLatitude: LiveData<Double> get() = _selectedLatitude
     private val _selectedLongitude = MutableLiveData<Double>()

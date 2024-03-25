@@ -1,7 +1,6 @@
 package com.example.weathertogo.ui
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -41,25 +40,28 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.weathertogo.ui.components.OutlinedRow
 import com.example.weathertogo.viewmodel.WeatherViewModelQ1
+import com.example.weathertogo.viewmodel.WeatherViewModelQ2
 import java.time.LocalDate
 import java.util.Calendar
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Q1Screen(
+fun Q2Screen(
     navController: NavHostController,
-    weatherViewModel: WeatherViewModelQ1
+    weatherViewModel: WeatherViewModelQ2
 ) {
     val latitude = remember { mutableStateOf("") }
     val longitude = remember { mutableStateOf("") }
     val datePickerState = rememberDatePickerState()
     var showDatePicker by remember { mutableStateOf(false) }
+    val context = LocalContext.current
     val isLoading = remember { mutableStateOf(false) }
 
     val buttonEnabled = remember {
@@ -173,21 +175,16 @@ fun Q1Screen(
                                 confirmButton = {
                                     TextButton(
                                         onClick = {
-                                            val selectedDateMillis = datePickerState.selectedDateMillis
-                                            if (selectedDateMillis != null) {
-                                                val selectedDate = Calendar.getInstance().apply {
-                                                    timeInMillis = selectedDateMillis
-                                                }
-                                                weatherViewModel.setSelectedDate(
-                                                    LocalDate.of(
-                                                        selectedDate.get(Calendar.YEAR),
-                                                        selectedDate.get(Calendar.MONTH) + 1,
-                                                        selectedDate.get(Calendar.DAY_OF_MONTH)
-                                                    )
-                                                )
-                                            } else {
-                                                Log.d("Q1Screen: DatePickerDialog", "No date selected")
+                                            val selectedDate = Calendar.getInstance().apply {
+                                                timeInMillis = datePickerState.selectedDateMillis!!
                                             }
+                                            weatherViewModel.setSelectedDate(
+                                                LocalDate.of(
+                                                    selectedDate.get(Calendar.YEAR),
+                                                    selectedDate.get(Calendar.MONTH) + 1,
+                                                    selectedDate.get(Calendar.DAY_OF_MONTH)
+                                                )
+                                            )
                                             showDatePicker = false
                                         }
                                     ) { Text("OK") }
@@ -205,7 +202,7 @@ fun Q1Screen(
                         if (selectedDate != null) {
                             Text(
                                 "Selected Date: $selectedDate",
-                            style = MaterialTheme.typography.bodyMedium
+                                style = MaterialTheme.typography.bodyMedium
                             )
                         }
                     }
@@ -214,7 +211,7 @@ fun Q1Screen(
                 Button(
                     onClick = {
                         isLoading.value = true
-                        weatherViewModel.getWeatherData()
+                        weatherViewModel.getWeatherData(context)
                         isLoading.value = false
                     },
                     enabled = buttonEnabled.value,
@@ -269,7 +266,4 @@ fun Q1Screen(
             }
         }
     )
-}
-fun isNumeric(str: String): Boolean {
-    return str.matches(Regex("[-+]?[0-9]+\\.?[0-9]*"))
 }
