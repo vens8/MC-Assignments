@@ -75,16 +75,16 @@ class WeatherViewModelQ1 : ViewModel() {
                     "https://api.open-meteo.com/v1/forecast?latitude=${_selectedLatitude.value}&longitude=${_selectedLongitude.value}&daily=temperature_2m_max,temperature_2m_min&timezone=auto&past_days=5&forecast_days=1"
                 }
 
-                daysPast < 0 && daysPast > -16 -> {
-                    "https://api.open-meteo.com/v1/forecast?latitude=${_selectedLatitude.value}&longitude=${_selectedLongitude.value}&daily=temperature_2m_max,temperature_2m_min&timezone=auto&past_days=5&forecast_days=${-1 * daysPast + 1}"
+                daysPast < 0 && daysPast > -15 -> {
+                    "https://api.open-meteo.com/v1/forecast?latitude=${_selectedLatitude.value}&longitude=${_selectedLongitude.value}&daily=temperature_2m_max,temperature_2m_min&timezone=auto&past_days=5&forecast_days=${-1 * daysPast + 2}"
 
                 }
 
-                daysPast <= -16 -> {
+                daysPast <= -15 -> {
                     // Historical API for dates more than 15 days in the future (using average of last 10 years)
                     val dateTenYearsAgo = today.minusYears(10)
                     Log.d("WeatherViewModel", "Date 10 years ago: $dateTenYearsAgo")
-                    "https://archive-api.open-meteo.com/v1/archive?latitude=${_selectedLatitude.value}&longitude=${_selectedLongitude.value}&start_date=$dateTenYearsAgo&end_date=$today&daily=temperature_2m_max,temperature_2m_min&timezone=auto"
+                    "https://archive-api.open-meteo.com/v1/archive?latitude=${_selectedLatitude.value}&longitude=${_selectedLongitude.value}&start_date=$dateTenYearsAgo&end_date=${today.minusDays(1)}&daily=temperature_2m_max,temperature_2m_min&timezone=auto"
                 }
 
                 else -> {
@@ -104,7 +104,6 @@ class WeatherViewModelQ1 : ViewModel() {
                     val weatherService = retrofit.create(WeatherService::class.java)
                     Log.d("WeatherViewModel", "API call started")
                     val response = weatherService.getWeatherData(url) // Call the appropriate API based on date
-
                     if (response.isSuccessful) {
                         val weatherData = response.body()
                         _weatherData.value = weatherData
