@@ -7,11 +7,13 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -45,22 +47,24 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.weathertogo.ui.components.OutlinedRow
 import com.example.weathertogo.ui.utility.isValidLatitude
 import com.example.weathertogo.ui.utility.isValidLongitude
-import com.example.weathertogo.viewmodel.WeatherViewModelQ1
+import com.example.weathertogo.viewmodel.WeatherViewModelQ2
 import java.time.LocalDate
 import java.util.Calendar
 
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Q1Screen(
+fun Q2Screen(
     navController: NavHostController,
-    weatherViewModel: WeatherViewModelQ1
+    weatherViewModel: WeatherViewModelQ2
 ) {
     val latitude = remember { mutableStateOf("") }
     val longitude = remember { mutableStateOf("") }
@@ -103,10 +107,23 @@ fun Q1Screen(
         )
     }
 
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(text = "WeatherToGo?", style = MaterialTheme.typography.headlineSmall) },
+                title = {
+                    Column {
+                        Text(text = "WeatherToGo?", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.padding(top = 16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "Powered by Room Persistence",
+                            fontStyle = FontStyle.Italic,
+                            fontSize = 12.sp,
+                            color = Color(0xFFFFA500),
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        )
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigate("landingScreen") }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -198,22 +215,17 @@ fun Q1Screen(
                                 confirmButton = {
                                     TextButton(
                                         onClick = {
-                                            val selectedDateMillis = datePickerState.selectedDateMillis
-                                            if (selectedDateMillis != null) {
-                                                val selectedDate = Calendar.getInstance().apply {
-                                                    timeInMillis = selectedDateMillis
-                                                }
-                                                weatherViewModel.setSelectedDate(
-                                                    LocalDate.of(
-                                                        selectedDate.get(Calendar.YEAR),
-                                                        selectedDate.get(Calendar.MONTH) + 1,
-                                                        selectedDate.get(Calendar.DAY_OF_MONTH)
-                                                    )
-                                                )
-                                                updateFormValidity()
-                                            } else {
-                                                Log.d("Q1Screen: DatePickerDialog", "No date selected")
+                                            val selectedDate = Calendar.getInstance().apply {
+                                                timeInMillis = datePickerState.selectedDateMillis!!
                                             }
+                                            weatherViewModel.setSelectedDate(
+                                                LocalDate.of(
+                                                    selectedDate.get(Calendar.YEAR),
+                                                    selectedDate.get(Calendar.MONTH) + 1,
+                                                    selectedDate.get(Calendar.DAY_OF_MONTH)
+                                                )
+                                            )
+                                            updateFormValidity()
                                             showDatePicker = false
                                         }
                                     ) { Text("OK") }
@@ -231,7 +243,7 @@ fun Q1Screen(
                         if (selectedDate != null) {
                             Text(
                                 "Selected Date: $selectedDate",
-                            style = MaterialTheme.typography.bodyMedium
+                                style = MaterialTheme.typography.bodyMedium
                             )
                         }
                     }
@@ -255,7 +267,7 @@ fun Q1Screen(
                 }
                 Spacer(modifier = Modifier.padding(8.dp))
 
-                if (tempMax != null && tempMin != null) {
+                if (tempMax != null && tempMin != null && location != null && weatherDate != null) {
                     Box(
                         modifier = Modifier.fillMaxWidth(),
                         contentAlignment = Alignment.Center) {
@@ -264,7 +276,7 @@ fun Q1Screen(
                                 .fillMaxWidth(0.8f)
                                 .padding(2.dp),
                             shape = RoundedCornerShape(8.dp),
-                            border = BorderStroke(1.dp, Color.Gray)
+                            border = BorderStroke(1.dp, Color.Gray),
                         ) {
                             Column(
                                 modifier = Modifier
