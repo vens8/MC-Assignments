@@ -16,6 +16,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.weathertogo.ui.LandingScreen
 import com.example.weathertogo.ui.Q1Screen
 import com.example.weathertogo.ui.Q2Screen
+import com.example.weathertogo.ui.SplashScreen
 import com.example.weathertogo.ui.theme.WeatherToGoTheme
 import com.example.weathertogo.viewmodel.WeatherViewModelQ1
 import com.example.weathertogo.viewmodel.WeatherViewModelFactoryQ1
@@ -40,7 +41,10 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    NavHost(navController = navController, startDestination = "landingScreen") {
+                    NavHost(navController = navController, startDestination = "splashScreen") {
+                        composable("splashScreen") {
+                            SplashScreen(navController)
+                        }
                         composable("landingScreen") {
                             LandingScreen(navController)
                         }

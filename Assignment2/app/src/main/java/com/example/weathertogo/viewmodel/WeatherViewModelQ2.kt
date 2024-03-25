@@ -4,19 +4,17 @@ import android.content.Context
 import android.os.Build
 import androidx.annotation.RequiresApi
 import android.util.Log
-import android.widget.Toast
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.weathertogo.db.WeatherDataEntity
 import com.example.weathertogo.db.WeatherDatabase
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import retrofit2.Response
+import kotlinx.coroutines.withContext
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.GET
-import retrofit2.http.Url
 import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.Socket
@@ -40,6 +38,9 @@ class WeatherViewModelQ2(context: Context) : ViewModel() {
     private val database = WeatherDatabase.getInstance(context)
     private val weatherDao = database.weatherDao()
 
+    val messages = MutableLiveData<List<String>>(emptyList())
+
+
     fun setSelectedLatitude(lat: String) {
         try {
             val latitude = lat.toDouble()
@@ -47,6 +48,7 @@ class WeatherViewModelQ2(context: Context) : ViewModel() {
             _selectedLatitude.value = latitude
         } catch (e: NumberFormatException) {
             // Handle non-numeric input error
+            Log.e("WeatherViewModel", "Invalid latitude input")
         }
     }
 
@@ -57,6 +59,7 @@ class WeatherViewModelQ2(context: Context) : ViewModel() {
             _selectedLongitude.value = longitude
         } catch (e: NumberFormatException) {
             // Handle non-numeric input error
+            Log.e("WeatherViewModel", "Invalid longitude input")
         }
     }
 
@@ -64,86 +67,149 @@ class WeatherViewModelQ2(context: Context) : ViewModel() {
         _selectedDate.value = date
     }
 
+    fun clearWeatherInfo() {
+        _weatherInfo.value = null
+    }
+
     @RequiresApi(Build.VERSION_CODES.O)
-    fun getWeatherData(context: Context) {
+    fun getWeatherData() {
         val date = _selectedDate.value
         if (date != null) {
-            if (hasInternetConnection(context)) {
                 // Make API call and store data in database
                 viewModelScope.launch {
-                    try {
-                        val retrofit = Retrofit.Builder()
-                            .baseUrl("https://api.open-meteo.com/v1/") // Base URL for both forecast and archive APIs
-                            .addConverterFactory(GsonConverterFactory.create())
-                            .build()
+                    val hasConnection = hasInternetConnection()
+                    if (hasConnection) {
+                        Log.d("WeatherViewModel", "Internet connection available")
+                        try {
+                            val retrofit = Retrofit.Builder()
+                                .baseUrl("https://api.open-meteo.com/v1/") // Base URL for both forecast and archive APIs
+                                .addConverterFactory(GsonConverterFactory.create())
+                                .build()
 
-                        val weatherService = retrofit.create(WeatherService::class.java)
-                        Log.d("WeatherViewModel", "API call started")
-                        val url = getWeatherUrl(date)
-                        val response =
-                            weatherService.getWeatherData(url) // Call the appropriate API based on date
+                            val weatherService = retrofit.create(WeatherService::class.java)
+                            Log.d("WeatherViewModel", "API call started")
+                            val url = getWeatherUrl(date)
+                            Log.d("WeatherViewModel", "URL: $url")
+                            val response = weatherService.getWeatherData(url) // Call the appropriate API based on date
 
-                        if (response.isSuccessful) {
-                            val weatherData = response.body()
-                            _weatherData.value = weatherData
-                            Log.d("WeatherViewModel", "API call successful")
-                            if (weatherData != null) {
-                                val weatherDataEntity = WeatherDataEntity(
-                                    date,
-                                    _selectedLatitude.value!!,
-                                    _selectedLongitude.value!!,
-                                    extractTempMax(weatherData),
-                                    extractTempMin(weatherData),
-                                    extractLocation(weatherData),
-                                    isFutureAndAverage(date)
-                                )
-                                try {
-                                    weatherDao.insertWeatherData(weatherDataEntity)
-                                } catch (e: Exception) {
-                                    // Handle database errors
-                                    Log.e("WeatherViewModel", "Database error: ${e.message}")
+                            if (response.isSuccessful) {
+                                Log.d("WeatherViewModel", "API call successful")
+                                val weatherData = response.body()
+                                _weatherData.value = weatherData
+                                if (weatherData != null) {
+                                    val today = LocalDate.now()
+                                    val daysPast = ChronoUnit.DAYS.between(date, today)
+                                    Log.d("DaysPast", "$daysPast")
+                                    if (daysPast <= -16) {
+                                        val tempMaxAverage = String.format("%.2f", weatherData.daily.temperature_2m_max.filterNotNull().average()).toDouble()
+                                        val tempMinAverage = String.format("%.2f", weatherData.daily.temperature_2m_min.filterNotNull().average()).toDouble()
+                                        val location = weatherData.timezone.split("/").reversed().joinToString(", ").replace("_", " ")
+                                        _weatherInfo.value = WeatherInfo(date, _selectedLatitude.value!!, _selectedLongitude.value!!, tempMaxAverage, tempMinAverage, location, true)
+                                        insertWeatherDataToDatabase(_weatherInfo.value!!)
+                                        val newMessages = messages.value?.toMutableList()
+                                        newMessages?.add("You're online!\nWe've fetched the report from online and saved it to the database for future offline access :)")
+                                        messages.value = newMessages!!
+                                    }
+                                    else {
+                                        val dateIndex = weatherData.daily.time.indexOf(date.toString())
+                                        if (dateIndex != -1) {
+                                            val tempMax = weatherData.daily.temperature_2m_max[dateIndex]
+                                            val tempMin = weatherData.daily.temperature_2m_min[dateIndex]
+                                            val location = weatherData.timezone.split("/").reversed().joinToString(", ").replace("_", " ")
+                                            _weatherInfo.value = WeatherInfo(date, _selectedLatitude.value!!, _selectedLongitude.value!!, tempMax, tempMin, location)
+                                            insertWeatherDataToDatabase(_weatherInfo.value!!)
+                                        } else {
+                                            // Handle missing date in response
+                                            Log.d("WeatherViewModel", "Date not found in response")
+                                            val newMessages = messages.value?.toMutableList()
+                                            newMessages?.add("Date not found in API JSON response")
+                                            messages.value = newMessages!!
+                                        }
+                                    }
+                                } else {
+                                    // Handle missing weather data in response
+                                    Log.d("WeatherViewModel", "Weather data not found in response")
+                                    val newMessages = messages.value?.toMutableList()
+                                    newMessages?.add("Weather data not found in API JSON response")
+                                    messages.value = newMessages!!
                                 }
                             } else {
-                                // Handle missing weather data in response
-                                Log.d("WeatherViewModel", "Weather data not found in response")
+                                Log.d("WeatherViewModel", "API call failed")
+                                val newMessages = messages.value?.toMutableList()
+                                newMessages?.add("API call failed")
+                                messages.value = newMessages!!
                             }
-                        } else {
-                            Log.d("WeatherViewModel", "API call failed")
+                        } catch (e: Exception) {
+                            // Handle network errors
+                            Log.e("WeatherViewModel", "Network error: ${e.message}")
+                            val newMessages = messages.value?.toMutableList()
+                            newMessages?.add("Network error: ${e.message}")
+                            messages.value = newMessages!!
                         }
-                    } catch (e: Exception) {
-                        // Handle network errors
-                        Log.e("WeatherViewModel", "Network error: ${e.message}")
+                    } else {
+                        // Fetch data from database
+                        Log.d("WeatherViewModel", "No internet connection")
+                        val newMessages = messages.value?.toMutableList()
+                        newMessages?.add("You're offline :(\nSearching database...")
+                        messages.value = newMessages!!
+                        fetchWeatherDataFromDatabase(_selectedLatitude.value!!, _selectedLongitude.value!!, date)
                     }
                 }
-            } else {
-                // Fetch data from database
-                fetchWeatherDataFromDatabase(context, date)
-            }
         } else {
             // Handle missing date error
-            Toast.makeText(context, "Please select a date", Toast.LENGTH_SHORT).show()
+            Log.e("WeatherViewModel", "Date not selected")
+            val newMessages = messages.value?.toMutableList()
+            newMessages?.add("Please select a date")
+            messages.value = newMessages!!
         }
     }
 
-    fun fetchWeatherDataFromDatabase(context: Context, date: LocalDate) {
+    private fun insertWeatherDataToDatabase(weatherInfo: WeatherInfo) {
+        // use viewModelScope here??
         viewModelScope.launch {
-            val weatherData = weatherDao.getWeatherDataByDate(date)
+            try {
+                val weatherDataEntity = WeatherDataEntity(
+                    weatherInfo.date,
+                    weatherInfo.latitude,
+                    weatherInfo.longitude,
+                    weatherInfo.tempMax,
+                    weatherInfo.tempMin,
+                    weatherInfo.location,
+                    weatherInfo.isAverage,
+                )
+                weatherDao.insertWeatherData(weatherDataEntity)
+            } catch (e: Exception) {
+                // Handle database errors
+                val newMessages = messages.value?.toMutableList()
+                newMessages?.add("Database error: ${e.message}")
+                messages.value = newMessages!!
+                Log.e("WeatherViewModel", "Database error: ${e.message}")
+            }
+        }
+    }
+
+    private fun fetchWeatherDataFromDatabase(lat: Double, lon: Double, date: LocalDate) {
+        viewModelScope.launch {
+            Log.d("WeatherViewModel", "Fetching data from database")
+            val weatherData = weatherDao.getWeatherDataByDateAndCoordinates(lat, lon, date)
             if (weatherData != null) {
+                Log.d("tempMax", "${weatherData.tempMax}")
                 _weatherInfo.value = WeatherInfo(
                     weatherData.date,
+                    weatherData.latitude,
+                    weatherData.longitude,
                     weatherData.tempMax,
                     weatherData.tempMin,
                     weatherData.location,
-                    weatherData.isAverage
+                    weatherData.isAverage,
+                    true
                 )
             } else {
-// Handle missing data in database
+                // Handle missing data in database
                 // Display a message indicating data not found in database
-                Toast.makeText(
-                    context,
-                    "No data found for this date. Please try fetching online.",
-                    Toast.LENGTH_SHORT
-                ).show()
+                val newMessages = messages.value?.toMutableList()
+                newMessages?.add("No data found for this date and coordinates in the database. Please try fetching again when online.")
+                messages.value = newMessages!!
             }
         }
     }
@@ -177,70 +243,19 @@ class WeatherViewModelQ2(context: Context) : ViewModel() {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun extractTempMax(weatherData: WeatherData?): Double {
-        if (weatherData != null) {
-            val daysPast =
-                ChronoUnit.DAYS.between(_selectedDate.value!!, LocalDate.now().minusDays(1))
-            val dateIndex = if (daysPast <= -16) {
-                // Find the average for future dates
-                weatherData.daily.time.indexOfFirst { it == _selectedDate.value?.toString() }
-            } else {
-                weatherData.daily.time.indexOf(_selectedDate.value?.toString())
+    private suspend fun hasInternetConnection(): Boolean {
+        return withContext(Dispatchers.IO) {
+            try {
+                val timeoutMs = 1500
+                val socket = Socket()
+                val socketAddress = InetSocketAddress("8.8.8.8", 53)
+
+                socket.connect(socketAddress, timeoutMs)
+                socket.close()
+                true
+            } catch (e: IOException) {
+                false
             }
-            return if (dateIndex != -1) {
-                weatherData.daily.temperature_2m_max[dateIndex]
-            } else {
-                0.0 // Handle case where date not found in response
-            }
-        }
-        return 0.0 // Handle missing weather data
-    }
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun extractTempMin(weatherData: WeatherData?): Double {
-        // Similar logic to extractTempMax
-        return if (weatherData != null) {
-            val daysPast =
-                ChronoUnit.DAYS.between(_selectedDate.value!!, LocalDate.now().minusDays(1))
-            val dateIndex = if (daysPast <= -16) {
-                weatherData.daily.time.indexOfFirst { it == _selectedDate.value?.toString() }
-            } else {
-                weatherData.daily.time.indexOf(_selectedDate.value?.toString())
-            }
-            if (dateIndex != -1) {
-                weatherData.daily.temperature_2m_min[dateIndex]
-            } else {
-                0.0
-            }
-        } else {
-            0.0
-        }
-    }
-
-    private fun extractLocation(weatherData: WeatherData?): String {
-        return weatherData?.timezone?.split("/")?.reversed()?.joinToString(", ")?.replace("_", " ")
-            ?: ""
-    }
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun isFutureAndAverage(date: LocalDate): Boolean {
-        val today = LocalDate.now()
-        return date.isAfter(today)
-    }
-
-    private fun hasInternetConnection(context: Context): Boolean {
-        // You can use ConnectivityManager here for more robust checks
-        return try {
-            val timeoutMs = 1500
-            val socket = Socket()
-            val socketAddress = InetSocketAddress("8.8.8.8", 53)
-
-            socket.connect(socketAddress, timeoutMs)
-            socket.close()
-            true
-        } catch (e: IOException) {
-            false
         }
     }
 }

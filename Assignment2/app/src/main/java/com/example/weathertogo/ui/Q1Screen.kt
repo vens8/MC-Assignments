@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,6 +16,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -45,6 +49,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.weathertogo.ui.components.OutlinedRow
+import com.example.weathertogo.ui.utility.isValidLatitude
+import com.example.weathertogo.ui.utility.isValidLongitude
 import com.example.weathertogo.viewmodel.WeatherViewModelQ1
 import java.time.LocalDate
 import java.util.Calendar
@@ -61,22 +67,41 @@ fun Q1Screen(
     val datePickerState = rememberDatePickerState()
     var showDatePicker by remember { mutableStateOf(false) }
     val isLoading = remember { mutableStateOf(false) }
+    val isFormValid = remember { mutableStateOf(false) }
+    val buttonEnabled = remember { derivedStateOf { isFormValid.value && !isLoading.value } }
 
-    val buttonEnabled = remember {
-        derivedStateOf {
-            latitude.value.isNotBlank() && longitude.value.isNotBlank() && isNumeric(latitude.value) && isNumeric(
-                longitude.value
-            ) && weatherViewModel.selectedDate.value != null && !isLoading.value
-        }
+    fun updateFormValidity() {
+        isFormValid.value = latitude.value.isNotBlank() &&
+                longitude.value.isNotBlank() &&
+                isValidLatitude(latitude.value) &&
+                isValidLongitude(longitude.value) &&
+                weatherViewModel.selectedDate.value != null
     }
 
     val weatherInfo by weatherViewModel.weatherInfo.observeAsState()
+    val messages by weatherViewModel.messages.observeAsState()
 
     val tempMax = weatherInfo?.tempMax
     val tempMin = weatherInfo?.tempMin
     val location = weatherInfo?.location
     val isAverage = weatherInfo?.isAverage
     val weatherDate = weatherInfo?.date
+
+    if (messages!!.isNotEmpty()) {
+        AlertDialog(
+            onDismissRequest = { weatherViewModel.messages.value = emptyList() },
+            title = { Text("Info") },
+            text = { Text(messages!!.joinToString("\n")) },
+            confirmButton = {
+                Button(onClick = { weatherViewModel.messages.value = emptyList() }) {
+                    Text("OK")
+                }
+            },
+            icon = {
+                Icon(Icons.Filled.Info, contentDescription = "Info")
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -117,12 +142,12 @@ fun Q1Screen(
                             value = latitude.value,
                             onValueChange = {
                                 latitude.value = it
-                                if (isNumeric(it)) {
+                                if (isValidLatitude(it)) {
                                     weatherViewModel.setSelectedLatitude(it)
                                 }
                             },
                             label = { Text("Latitude") },
-                            isError = !isNumeric(latitude.value),
+                            isError = !isValidLatitude(latitude.value),
                             modifier = Modifier.fillMaxWidth(0.6f),
 
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
@@ -132,12 +157,12 @@ fun Q1Screen(
                             value = longitude.value,
                             onValueChange = {
                                 longitude.value = it
-                                if (isNumeric(it)) {
+                                if (isValidLongitude(it)) {
                                     weatherViewModel.setSelectedLongitude(it)
                                 }
                             },
                             label = { Text("Longitude") },
-                            isError = !isNumeric(longitude.value),
+                            isError = !isValidLongitude(longitude.value),
                             modifier = Modifier.fillMaxWidth(0.6f),
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                         )
@@ -185,6 +210,7 @@ fun Q1Screen(
                                                         selectedDate.get(Calendar.DAY_OF_MONTH)
                                                     )
                                                 )
+                                                updateFormValidity()
                                             } else {
                                                 Log.d("Q1Screen: DatePickerDialog", "No date selected")
                                             }
@@ -230,46 +256,55 @@ fun Q1Screen(
                 Spacer(modifier = Modifier.padding(8.dp))
 
                 if (tempMax != null && tempMin != null) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth(0.8f)
-                            .padding(2.dp),
-                        shape = RoundedCornerShape(8.dp),
-                        border = BorderStroke(1.dp, Color.Gray)
-                    ) {
-                        Column(
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center) {
+                        Card(
                             modifier = Modifier
-                                .padding(vertical = 10.dp)
-                                .fillMaxWidth(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
+                                .fillMaxWidth(0.8f)
+                                .padding(2.dp),
+                            shape = RoundedCornerShape(8.dp),
+                            border = BorderStroke(1.dp, Color.Gray)
                         ) {
-                            Text(
-                                text = "Your Weather Report",
-                                style = MaterialTheme.typography.titleMedium,
-                                modifier = Modifier.padding(bottom = 16.dp)
-                            )
-                            OutlinedRow("Date:", "$weatherDate")
-                            OutlinedRow("Location/Timezone:", "$location")
-                            OutlinedRow("Max Temp:", "$tempMax°C")
-                            OutlinedRow("Min Temp:", "$tempMin°C")
-                            Text(
-                                text = if (isAverage == true) {
-                                    "Note: Using Average Temperatures (Past 10 Years)"
-                                } else {
-                                    ""
-                                },
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color.Yellow,
-                                modifier = Modifier.padding(horizontal = 8.dp)
-                            )
+                            Column(
+                                modifier = Modifier
+                                    .padding(vertical = 10.dp)
+                                    .fillMaxWidth(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Text(
+                                    text = "Your Weather Report",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    modifier = Modifier.padding(bottom = 16.dp)
+                                )
+                                OutlinedRow("Date:", "$weatherDate")
+                                OutlinedRow("Location/Timezone:", "$location")
+                                OutlinedRow("Max Temp:", "$tempMax°C")
+                                OutlinedRow("Min Temp:", "$tempMin°C")
+                                Text(
+                                    text = if (isAverage == true) {
+                                        "Note: Using Average Temperatures (Past 10 Years)"
+                                    } else {
+                                        ""
+                                    },
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.Yellow,
+                                    modifier = Modifier.padding(horizontal = 8.dp)
+                                )
+                            }
+                        }
+                        IconButton(
+                            onClick = { weatherViewModel.clearWeatherInfo() },
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(end = 36.dp)
+                        ) {
+                            Icon(Icons.Filled.Close, contentDescription = "Close")
                         }
                     }
                 }
             }
         }
     )
-}
-fun isNumeric(str: String): Boolean {
-    return str.matches(Regex("[-+]?[0-9]+\\.?[0-9]*"))
 }

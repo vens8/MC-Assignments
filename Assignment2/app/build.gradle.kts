@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
+    kotlin("kapt") version "1.9.0"
 }
 
 android {
@@ -50,7 +51,8 @@ android {
 }
 
 dependencies {
-
+    val room_version = "2.6.1"
+    kapt("androidx.room:room-compiler:$room_version")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -59,7 +61,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3") // Update version as needed
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.room.common)
     implementation(libs.androidx.room.ktx)
