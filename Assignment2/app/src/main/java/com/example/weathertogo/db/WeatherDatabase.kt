@@ -19,7 +19,6 @@ abstract class WeatherDatabase : RoomDatabase() {
         fun getInstance(context: Context): WeatherDatabase {
             synchronized(this) {
                 var instance = INSTANCE
-
                 if (instance == null) {
                     instance = Room.databaseBuilder(
                         context.applicationContext,
