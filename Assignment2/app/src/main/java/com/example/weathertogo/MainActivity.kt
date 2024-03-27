@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -16,7 +17,6 @@ import androidx.navigation.compose.rememberNavController
 import com.example.weathertogo.ui.LandingScreen
 import com.example.weathertogo.ui.Q1Screen
 import com.example.weathertogo.ui.Q2Screen
-import com.example.weathertogo.ui.SplashScreen
 import com.example.weathertogo.ui.theme.WeatherToGoTheme
 import com.example.weathertogo.viewmodel.WeatherViewModelQ1
 import com.example.weathertogo.viewmodel.WeatherViewModelFactoryQ1
@@ -27,6 +27,7 @@ class MainActivity : ComponentActivity() {
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         setContent {
             // creating our navController
@@ -41,10 +42,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    NavHost(navController = navController, startDestination = "splashScreen") {
-                        composable("splashScreen") {
-                            SplashScreen(navController)
-                        }
+                    NavHost(navController = navController, startDestination = "landingScreen") {
                         composable("landingScreen") {
                             LandingScreen(navController)
                         }
