@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.MySplashScreen" parent="Theme.WeatherToGo">
+        <item name="windowSplashScreenBackground">@color/gray</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/weathertogoicon</item>
+        <item name="windowSplashScreenAnimationDuration">1000</item>
+        <item name="postSplashScreenTheme">@style/Theme.WeatherToGo</item>
+    </style>
+</resources>

@@ -100,9 +100,22 @@ class WeatherViewModelQ2(context: Context) : ViewModel() {
                                     val today = LocalDate.now()
                                     val daysPast = ChronoUnit.DAYS.between(date, today)
                                     Log.d("DaysPast", "$daysPast")
-                                    if (daysPast <= -16) {
-                                        val tempMaxAverage = String.format("%.2f", weatherData.daily.temperature_2m_max.filterNotNull().average()).toDouble()
-                                        val tempMinAverage = String.format("%.2f", weatherData.daily.temperature_2m_min.filterNotNull().average()).toDouble()
+                                    if (daysPast <= -15) {
+                                        val selectedDay = date.dayOfMonth
+                                        val selectedMonth = date.monthValue
+
+                                        val relevantTempMax = mutableListOf<Double>()
+                                        val relevantTempMin = mutableListOf<Double>()
+                                        for (i in 0 until weatherData.daily.time.size) {
+                                            val parsedDate = LocalDate.parse(weatherData.daily.time[i])
+                                            if (parsedDate.dayOfMonth == selectedDay && parsedDate.monthValue == selectedMonth) {
+                                                relevantTempMax.add(weatherData.daily.temperature_2m_max[i])
+                                                relevantTempMin.add(weatherData.daily.temperature_2m_min[i])
+                                            }
+                                        }
+
+                                        val tempMaxAverage = if (relevantTempMax.isNotEmpty()) String.format("%.2f", relevantTempMax.average()).toDouble() else 0.0
+                                        val tempMinAverage = if (relevantTempMin.isNotEmpty()) String.format("%.2f", relevantTempMin.average()).toDouble() else 0.0
                                         val location = weatherData.timezone.split("/").reversed().joinToString(", ").replace("_", " ")
                                         _weatherInfo.value = WeatherInfo(date, _selectedLatitude.value!!, _selectedLongitude.value!!, tempMaxAverage, tempMinAverage, location, true)
                                         insertWeatherDataToDatabase(_weatherInfo.value!!)
@@ -204,6 +217,9 @@ class WeatherViewModelQ2(context: Context) : ViewModel() {
                     weatherData.isAverage,
                     true
                 )
+                val newMessages = messages.value?.toMutableList()
+                newMessages?.add("Data found in database! :)")
+                messages.value = newMessages!!
             } else {
                 // Handle missing data in database
                 // Display a message indicating data not found in database
