@@ -1,13 +1,13 @@
 package com.example.weathertogo.ui
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -46,12 +46,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.example.weathertogo.R
 import com.example.weathertogo.ui.components.OutlinedRow
 import com.example.weathertogo.ui.utility.isValidLatitude
 import com.example.weathertogo.ui.utility.isValidLongitude
@@ -132,187 +136,205 @@ fun Q2Screen(
             )
         },
         content = { innerPadding ->
-            Column(
+            val backgroundImage = painterResource(R.drawable.background)
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                    .background(MaterialTheme.colorScheme.background),
+                contentAlignment = Alignment.Center
             ) {
-                Spacer(modifier = Modifier.padding(8.dp))
-                OutlinedCard(
-                    modifier = Modifier.fillMaxWidth(0.8f).padding(2.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    border = BorderStroke(1.dp, Color.Gray)
+                Image(
+                    painter = backgroundImage,
+                    contentDescription = "Background",
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .blur(20.dp),
+                    contentScale = ContentScale.Crop
+                )
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding),
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center // Center content vertically
+                    Spacer(modifier = Modifier.padding(8.dp))
+                    OutlinedCard(
+                        modifier = Modifier.fillMaxWidth(0.8f).padding(2.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, Color.Gray)
                     ) {
-                        Text(
-                            text = "Enter Location Details",
-                            style = MaterialTheme.typography.titleMedium,
-                        )
-                        OutlinedTextField(
-                            value = latitude.value,
-                            onValueChange = {
-                                latitude.value = it
-                                if (isValidLatitude(it)) {
-                                    weatherViewModel.setSelectedLatitude(it)
-                                }
-                            },
-                            label = { Text("Latitude") },
-                            isError = !isValidLatitude(latitude.value),
-                            modifier = Modifier.fillMaxWidth(0.6f),
-
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-                        )
-                        Spacer(modifier = Modifier.padding(2.dp))
-                        OutlinedTextField(
-                            value = longitude.value,
-                            onValueChange = {
-                                longitude.value = it
-                                if (isValidLongitude(it)) {
-                                    weatherViewModel.setSelectedLongitude(it)
-                                }
-                            },
-                            label = { Text("Longitude") },
-                            isError = !isValidLongitude(longitude.value),
-                            modifier = Modifier.fillMaxWidth(0.6f),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.padding(8.dp))
-                OutlinedCard(
-                    modifier = Modifier.fillMaxWidth(0.8f).padding(2.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    border = BorderStroke(1.dp, Color.Gray),
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .padding(16.dp)
-                            .fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "Select Date",
-                            style = MaterialTheme.typography.titleMedium,
-                        )
-                        Button(
-                            onClick = { showDatePicker = true },
+                        Column(
                             modifier = Modifier
-                                .fillMaxWidth(0.5f)
-                                .align(Alignment.CenterHorizontally),
+                                .padding(16.dp)
+                                .fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center // Center content vertically
                         ) {
-                            Text(text = "Choose")
-                        }
-                        if (showDatePicker) {
-                            DatePickerDialog(
-                                onDismissRequest = { showDatePicker = false },
-                                confirmButton = {
-                                    TextButton(
-                                        onClick = {
-                                            val selectedDate = Calendar.getInstance().apply {
-                                                timeInMillis = datePickerState.selectedDateMillis!!
-                                            }
-                                            weatherViewModel.setSelectedDate(
-                                                LocalDate.of(
-                                                    selectedDate.get(Calendar.YEAR),
-                                                    selectedDate.get(Calendar.MONTH) + 1,
-                                                    selectedDate.get(Calendar.DAY_OF_MONTH)
-                                                )
-                                            )
-                                            updateFormValidity()
-                                            showDatePicker = false
-                                        }
-                                    ) { Text("OK") }
-                                },
-                                dismissButton = {
-                                    TextButton(
-                                        onClick = { showDatePicker = false }
-                                    ) { Text("Cancel") }
-                                }
-                            ) {
-                                DatePicker(state = datePickerState)
-                            }
-                        }
-                        val selectedDate = weatherViewModel.selectedDate.value
-                        if (selectedDate != null) {
                             Text(
-                                "Selected Date: $selectedDate",
-                                style = MaterialTheme.typography.bodyMedium
+                                text = "Enter Location Details",
+                                style = MaterialTheme.typography.titleMedium,
+                            )
+                            OutlinedTextField(
+                                value = latitude.value,
+                                onValueChange = {
+                                    latitude.value = it
+                                    if (isValidLatitude(it)) {
+                                        weatherViewModel.setSelectedLatitude(it)
+                                    }
+                                },
+                                label = { Text("Latitude") },
+                                isError = !isValidLatitude(latitude.value),
+                                modifier = Modifier.fillMaxWidth(0.6f),
+
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                            )
+                            Spacer(modifier = Modifier.padding(2.dp))
+                            OutlinedTextField(
+                                value = longitude.value,
+                                onValueChange = {
+                                    longitude.value = it
+                                    if (isValidLongitude(it)) {
+                                        weatherViewModel.setSelectedLongitude(it)
+                                    }
+                                },
+                                label = { Text("Longitude") },
+                                isError = !isValidLongitude(longitude.value),
+                                modifier = Modifier.fillMaxWidth(0.6f),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                             )
                         }
                     }
-                }
-                Spacer(modifier = Modifier.padding(8.dp))
-                Button(
-                    onClick = {
-                        isLoading.value = true
-                        weatherViewModel.getWeatherData()
-                        isLoading.value = false
-                    },
-                    enabled = buttonEnabled.value,
-                    modifier = Modifier.fillMaxWidth(0.5f),
-                    shape = RoundedCornerShape(20)
-                ) {
-                    if (isLoading.value) {
-                        CircularProgressIndicator(modifier = Modifier.size(20.dp))
-                    } else {
-                        Text(text = "Get Weather Data")
-                    }
-                }
-                Spacer(modifier = Modifier.padding(8.dp))
-
-                if (tempMax != null && tempMin != null && location != null && weatherDate != null) {
-                    Box(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center) {
-                        Card(
+                    Spacer(modifier = Modifier.padding(8.dp))
+                    OutlinedCard(
+                        modifier = Modifier.fillMaxWidth(0.8f).padding(2.dp),
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, Color.Gray),
+                    ) {
+                        Column(
                             modifier = Modifier
-                                .fillMaxWidth(0.8f)
-                                .padding(2.dp),
-                            shape = RoundedCornerShape(8.dp),
-                            border = BorderStroke(1.dp, Color.Gray),
+                                .padding(16.dp)
+                                .fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Column(
+                            Text(
+                                text = "Select Date",
+                                style = MaterialTheme.typography.titleMedium,
+                            )
+                            Button(
+                                onClick = { showDatePicker = true },
                                 modifier = Modifier
-                                    .padding(vertical = 10.dp)
-                                    .fillMaxWidth(),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center
+                                    .fillMaxWidth(0.5f)
+                                    .align(Alignment.CenterHorizontally),
                             ) {
-                                Text(
-                                    text = "Your Weather Report",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    modifier = Modifier.padding(bottom = 16.dp)
-                                )
-                                OutlinedRow("Date:", "$weatherDate")
-                                OutlinedRow("Location/Timezone:", "$location")
-                                OutlinedRow("Max Temp:", "$tempMax°C")
-                                OutlinedRow("Min Temp:", "$tempMin°C")
-                                Text(
-                                    text = if (isAverage == true) {
-                                        "Note: Using Average Temperatures (Past 10 Years)"
-                                    } else {
-                                        ""
+                                Text(text = "Choose")
+                            }
+                            if (showDatePicker) {
+                                DatePickerDialog(
+                                    onDismissRequest = { showDatePicker = false },
+                                    confirmButton = {
+                                        TextButton(
+                                            onClick = {
+                                                val selectedDate = Calendar.getInstance().apply {
+                                                    timeInMillis =
+                                                        datePickerState.selectedDateMillis!!
+                                                }
+                                                weatherViewModel.setSelectedDate(
+                                                    LocalDate.of(
+                                                        selectedDate.get(Calendar.YEAR),
+                                                        selectedDate.get(Calendar.MONTH) + 1,
+                                                        selectedDate.get(Calendar.DAY_OF_MONTH)
+                                                    )
+                                                )
+                                                updateFormValidity()
+                                                showDatePicker = false
+                                            }
+                                        ) { Text("OK") }
                                     },
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = Color.Yellow,
-                                    modifier = Modifier.padding(horizontal = 8.dp)
+                                    dismissButton = {
+                                        TextButton(
+                                            onClick = { showDatePicker = false }
+                                        ) { Text("Cancel") }
+                                    }
+                                ) {
+                                    DatePicker(state = datePickerState)
+                                }
+                            }
+                            val selectedDate = weatherViewModel.selectedDate.value
+                            if (selectedDate != null) {
+                                Text(
+                                    "Selected Date: $selectedDate",
+                                    style = MaterialTheme.typography.bodyMedium
                                 )
                             }
                         }
-                        IconButton(
-                            onClick = { weatherViewModel.clearWeatherInfo() },
-                            modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                .padding(end = 36.dp)
+                    }
+                    Spacer(modifier = Modifier.padding(8.dp))
+                    Button(
+                        onClick = {
+                            isLoading.value = true
+                            weatherViewModel.getWeatherData()
+                            isLoading.value = false
+                        },
+                        enabled = buttonEnabled.value,
+                        modifier = Modifier.fillMaxWidth(0.5f),
+                        shape = RoundedCornerShape(20)
+                    ) {
+                        if (isLoading.value) {
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                        } else {
+                            Text(text = "Get Weather Data")
+                        }
+                    }
+                    Spacer(modifier = Modifier.padding(8.dp))
+
+                    if (tempMax != null && tempMin != null && location != null && weatherDate != null) {
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Filled.Close, contentDescription = "Close")
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth(0.8f)
+                                    .padding(2.dp),
+                                shape = RoundedCornerShape(8.dp),
+                                border = BorderStroke(1.dp, Color.Gray),
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .padding(vertical = 10.dp)
+                                        .fillMaxWidth(),
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    Text(
+                                        text = "Your Weather Report",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        modifier = Modifier.padding(bottom = 16.dp)
+                                    )
+                                    OutlinedRow("Date:", "$weatherDate")
+                                    OutlinedRow("Location/Timezone:", "$location")
+                                    OutlinedRow("Max Temp:", "$tempMax°C")
+                                    OutlinedRow("Min Temp:", "$tempMin°C")
+                                    Text(
+                                        text = if (isAverage == true) {
+                                            "Note: Using Average Temperatures (Past 10 Years)"
+                                        } else {
+                                            ""
+                                        },
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color.Yellow,
+                                        modifier = Modifier.padding(horizontal = 8.dp)
+                                    )
+                                }
+                            }
+                            IconButton(
+                                onClick = { weatherViewModel.clearWeatherInfo() },
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .padding(end = 36.dp)
+                            ) {
+                                Icon(Icons.Filled.Close, contentDescription = "Close")
+                            }
                         }
                     }
                 }
