@@ -1,5 +1,6 @@
 package com.example.axelero.ui.components
 
+import android.util.Log
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
@@ -42,9 +43,13 @@ fun LineChart(
         modifier = Modifier.fillMaxWidth()
     ) {
         LaunchedEffect(data) {
-            modelProducer.tryRunTransaction {
-                lineSeries {
-                    series(data)
+            Log.d("LineChart", "Updating line chart with new data")
+            if (data.isNotEmpty()) {
+                modelProducer.tryRunTransaction {
+                    lineSeries {
+                        Log.d("LineChart", "Adding series with data: ${data.toString()}")
+                        series(data)
+                    }
                 }
             }
         }

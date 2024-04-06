@@ -16,7 +16,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.example.axelero.db.OrientationData
 import com.example.axelero.repository.OrientationDataRepository
-import com.example.axelero.ui.predictOrientationData
 
 @Composable
 fun SensorDelayDropdownMenu(
