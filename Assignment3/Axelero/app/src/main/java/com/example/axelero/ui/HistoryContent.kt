@@ -1,7 +1,11 @@
 package com.example.axelero.ui
 
+import android.app.Activity
+import android.content.Intent
 import android.hardware.SensorManager
+import android.os.Bundle
 import android.os.Environment
+import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -20,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat.startActivityForResult
 import com.example.axelero.db.OrientationData
 import com.example.axelero.repository.OrientationDataRepository
 import com.example.axelero.ui.components.LineChart
@@ -28,7 +33,7 @@ import com.patrykandpatrick.vico.core.model.CartesianChartModelProducer
 import java.io.File
 
 @Composable
-fun HistoryContent(orientationDataRepository: OrientationDataRepository) {
+fun HistoryContent(orientationDataRepository: OrientationDataRepository, createDocumentResult: ActivityResultLauncher<Intent>) {
     val orientationData = produceState<List<OrientationData>>(initialValue = emptyList()) {
         value = orientationDataRepository.getOrientationData()
     }
@@ -70,7 +75,13 @@ fun HistoryContent(orientationDataRepository: OrientationDataRepository) {
         Button(
             onClick = {
                 // Export the orientation data to a text file
-                exportOrientationData(orientationData)
+//                exportOrientationData(orientationData)
+                val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type = "text/plain"
+                    putExtra(Intent.EXTRA_TITLE, "orientation_data.txt")
+                }
+                createDocumentResult.launch(intent)
             }
         ) {
             Text("Export Data")
@@ -91,16 +102,31 @@ fun HistoryContent(orientationDataRepository: OrientationDataRepository) {
     }
 }
 
+//private fun exportOrientationData(orientationData: State<List<OrientationData>>) {
+//    val externalStorageDir = Environment.getExternalStorageDirectory()
+//    val file = File(externalStorageDir, "orientation_data.txt")
+//
+//    // Convert the orientation data to a string format
+//    val dataString = orientationData.value.joinToString("\n") { "${it.xAngle}, ${it.yAngle}, ${it.zAngle}, ${it.timestamp}" }
+//
+//    // Write the data to the text file
+//    file.writeText(dataString)
+//
+//    // Display a success message or perform any other necessary actions
+//    // ...
+//}
+
+// Request code for creating a text document.
+const val CREATE_FILE = 1
+
 private fun exportOrientationData(orientationData: State<List<OrientationData>>) {
-    val externalStorageDir = Environment.getExternalStorageDirectory()
-    val file = File(externalStorageDir, "orientation_data.txt")
-
-    // Convert the orientation data to a string format
-    val dataString = orientationData.value.joinToString("\n") { "${it.xAngle}, ${it.yAngle}, ${it.zAngle}, ${it.timestamp}" }
-
-    // Write the data to the text file
-    file.writeText(dataString)
-
-    // Display a success message or perform any other necessary actions
-    // ...
+    val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+        addCategory(Intent.CATEGORY_OPENABLE)
+        type = "text/plain"
+        putExtra(Intent.EXTRA_TITLE, "orientation_data.txt")
+    }
+    startActivityForResult(Activity(), intent, CREATE_FILE, Bundle())
 }
+
+
+
