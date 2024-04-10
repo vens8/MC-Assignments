@@ -11,4 +11,7 @@ interface OrientationDataDao {
 
     @Query("SELECT * FROM orientation_data")
     suspend fun getAllOrientationData(): List<OrientationData>
+
+    @Query("DELETE FROM orientation_data")
+    suspend fun deleteAll()
 }
