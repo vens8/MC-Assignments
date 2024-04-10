@@ -20,7 +20,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MainContent(xAngle, yAngle, zAngle)
+            MainContent(xAngle, yAngle, zAngle, orientationDataRepository)
         }
     }
 

@@ -38,7 +38,8 @@ class OrientationDataRepository private constructor(
     private var accelerometer: Sensor? = null
     private var sensorEventListener: SensorEventListener? = null
     private var lastUpdate: Long = 0
-
+    var sensingInterval: Int = SensorManager.SENSOR_DELAY_NORMAL
+        private set
 
     init {
         Log.d("OrientationDataRepository", "Initializing OrientationDataRepository")
@@ -113,6 +114,10 @@ class OrientationDataRepository private constructor(
         orientationDataDao.insert(orientationData)
     }
 
+    suspend fun clearOrientationData() {
+        orientationDataDao.deleteAll()
+    }
+
     fun changeSensingInterval(interval: Int) {
         sensorEventListener?.let {
             sensorManager.unregisterListener(it)
@@ -122,6 +127,8 @@ class OrientationDataRepository private constructor(
                 interval
             )
         }
+        // Update the sensing interval whenever it's changed
+        sensingInterval = interval
     }
 
     suspend fun getOrientationData(): List<OrientationData> {

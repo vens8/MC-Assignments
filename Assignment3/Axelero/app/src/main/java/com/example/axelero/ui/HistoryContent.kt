@@ -30,6 +30,9 @@ import com.example.axelero.repository.OrientationDataRepository
 import com.example.axelero.ui.components.LineChart
 import com.example.axelero.ui.components.SensorDelayDropdownMenu
 import com.patrykandpatrick.vico.core.model.CartesianChartModelProducer
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.io.File
 
 @Composable
@@ -41,8 +44,6 @@ fun HistoryContent(orientationDataRepository: OrientationDataRepository, createD
     val modelProducer1 = remember { CartesianChartModelProducer.build() }
     val modelProducer2 = remember { CartesianChartModelProducer.build() }
     val modelProducer3 = remember { CartesianChartModelProducer.build() }
-
-    var selectedInterval by remember { mutableIntStateOf(SensorManager.SENSOR_DELAY_NORMAL) }
 
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -74,12 +75,11 @@ fun HistoryContent(orientationDataRepository: OrientationDataRepository, createD
         Spacer(modifier = Modifier.height(16.dp))
         Button(
             onClick = {
-                // Export the orientation data to a text file
-//                exportOrientationData(orientationData)
+                // Save the orientation data to a text file on the device
                 val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
                     addCategory(Intent.CATEGORY_OPENABLE)
                     type = "text/plain"
-                    putExtra(Intent.EXTRA_TITLE, "orientation_data.txt")
+                    putExtra(Intent.EXTRA_TITLE, "orientation_data_" + {orientationDataRepository.sensingInterval.toString()} + ".txt")
                 }
                 createDocumentResult.launch(intent)
             }
@@ -87,45 +87,17 @@ fun HistoryContent(orientationDataRepository: OrientationDataRepository, createD
             Text("Export Data")
         }
         Spacer(modifier = Modifier.height(16.dp))
-        // Allow the user to change the sensing interval
-        SensorDelayDropdownMenu(
-            orientationData = orientationData.value,
-            orientationDataRepository = orientationDataRepository,
-            onIntervalChanged = { interval ->
-                selectedInterval = interval
-                // Repeat the prediction process with the new interval
-//                val (newPredictedXAngles, newPredictedYAngles, newPredictedZAngles) =
-//                    predictOrientationData(orientationData.value)
-                // Update your predicted angles here
+        Button(
+            onClick = {
+                // Reset the orientation data in the database
+                CoroutineScope(Dispatchers.IO).launch {
+                    orientationDataRepository.clearOrientationData()
+                }
             }
-        )
+        ) {
+            Text("Reset Data")
+        }
     }
-}
-
-//private fun exportOrientationData(orientationData: State<List<OrientationData>>) {
-//    val externalStorageDir = Environment.getExternalStorageDirectory()
-//    val file = File(externalStorageDir, "orientation_data.txt")
-//
-//    // Convert the orientation data to a string format
-//    val dataString = orientationData.value.joinToString("\n") { "${it.xAngle}, ${it.yAngle}, ${it.zAngle}, ${it.timestamp}" }
-//
-//    // Write the data to the text file
-//    file.writeText(dataString)
-//
-//    // Display a success message or perform any other necessary actions
-//    // ...
-//}
-
-// Request code for creating a text document.
-const val CREATE_FILE = 1
-
-private fun exportOrientationData(orientationData: State<List<OrientationData>>) {
-    val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-        addCategory(Intent.CATEGORY_OPENABLE)
-        type = "text/plain"
-        putExtra(Intent.EXTRA_TITLE, "orientation_data.txt")
-    }
-    startActivityForResult(Activity(), intent, CREATE_FILE, Bundle())
 }
 
 

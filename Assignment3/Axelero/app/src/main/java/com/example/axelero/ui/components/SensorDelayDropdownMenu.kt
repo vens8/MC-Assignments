@@ -19,23 +19,24 @@ import com.example.axelero.repository.OrientationDataRepository
 
 @Composable
 fun SensorDelayDropdownMenu(
-    orientationData: List<OrientationData>,
     orientationDataRepository: OrientationDataRepository,
     onIntervalChanged: (Int) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     val items = listOf(
         SensorManager.SENSOR_DELAY_NORMAL,
-        SensorManager.SENSOR_DELAY_UI,
-        SensorManager.SENSOR_DELAY_GAME,
-        SensorManager.SENSOR_DELAY_FASTEST
+        10,
+        20,
+        30
     )
     var selectedInterval by remember { mutableIntStateOf(items[0]) }
 
     Box(modifier = Modifier.fillMaxWidth()) {
         Text(
             text = selectedInterval.toString(),
-            modifier = Modifier.fillMaxWidth().clickable(onClick = { expanded = true })
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = { expanded = true })
         )
         DropdownMenu(
             expanded = expanded,
@@ -48,17 +49,11 @@ fun SensorDelayDropdownMenu(
                         Text(text = interval.toString())
                     },
                     onClick = {
-                    selectedInterval = interval
-                    expanded = false
-                    orientationDataRepository.changeSensingInterval(interval)
-                    onIntervalChanged(interval)
-//                    // Repeat the prediction process with the new interval
-//                    val (newPredictedXAngles, newPredictedYAngles, newPredictedZAngles) =
-//                        predictOrientationData(orientationData)
-//                    predictedXAngles = newPredictedXAngles
-//                    predictedYAngles = newPredictedYAngles
-//                    predictedZAngles = newPredictedZAngles
-                })
+                        selectedInterval = interval
+                        expanded = false
+                        orientationDataRepository.changeSensingInterval(interval)
+                        onIntervalChanged(interval)
+                    })
             }
         }
     }
