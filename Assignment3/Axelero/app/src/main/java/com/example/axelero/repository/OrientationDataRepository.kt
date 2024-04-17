@@ -6,7 +6,6 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.util.Log
-import androidx.core.content.getSystemService
 import com.example.axelero.db.AppDatabase
 import com.example.axelero.db.OrientationData
 import com.example.axelero.db.OrientationDataDao

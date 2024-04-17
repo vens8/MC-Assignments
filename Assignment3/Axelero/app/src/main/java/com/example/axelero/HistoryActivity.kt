@@ -6,20 +6,9 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.axelero.db.AppDatabase
 import com.example.axelero.repository.OrientationDataRepository
 import com.example.axelero.ui.HistoryContent
-import com.example.axelero.ui.theme.AxeleroTheme
 import kotlinx.coroutines.launch
 
 class HistoryActivity : ComponentActivity() {
