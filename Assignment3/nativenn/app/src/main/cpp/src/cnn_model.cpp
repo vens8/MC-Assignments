@@ -20,8 +20,10 @@ const int FC_SIZE = 128;
 
 int argmax(float *arr, const int size);
 
-void classify_images(JNIEnv* env, jobject imageData) {
+void classify_images(JNIEnv* env, jintArray inputTensor) {
     LOGD("classify_images called");
+
+    uint32_t currentOperandIndex = 0;
 
     // Load the CNN model using NNAPI
     ANeuralNetworksModel* model;
@@ -48,6 +50,8 @@ void classify_images(JNIEnv* env, jobject imageData) {
         ANeuralNetworksModel_free(model);
         return;
     }
+    uint32_t inputIndex = currentOperandIndex++;
+    LOGD("input operand index: %d", inputIndex);
     LOGD("Input operand added to the model");
 
     // Add the convolution layer operands
@@ -65,12 +69,15 @@ void classify_images(JNIEnv* env, jobject imageData) {
         ANeuralNetworksModel_free(model);
         return;
     }
+    uint32_t convWeightsIndex = currentOperandIndex++;
+    LOGD("convWeights operand index: %d", convWeightsIndex);
     LOGD("Convolution weights operand added to the model");
 
+    const uint32_t convBiasesDimensions[] = {CONV_FILTERS};
     ANeuralNetworksOperandType convBiasesType = {
             .type = ANEURALNETWORKS_TENSOR_FLOAT32,
             .dimensionCount = 1,
-            .dimensions = reinterpret_cast<const uint32_t *>(CONV_FILTERS),
+            .dimensions = convBiasesDimensions,
             .scale = 0.0f,
             .zeroPoint = 0
     };
@@ -80,6 +87,8 @@ void classify_images(JNIEnv* env, jobject imageData) {
         ANeuralNetworksModel_free(model);
         return;
     }
+    uint32_t convBiasesIndex = currentOperandIndex++;
+    LOGD("latest operand index: %d", convBiasesIndex);
     LOGD("Convolution biases operand added to the model");
 
     const uint32_t convOutputDimensions[] = {1, IMAGE_SIZE - CONV_KERNEL_SIZE + 1, IMAGE_SIZE - CONV_KERNEL_SIZE + 1, CONV_FILTERS};
@@ -92,6 +101,18 @@ void classify_images(JNIEnv* env, jobject imageData) {
     };
     LOGD("Convolution output operand created");
 
+    // Add the convolution operation
+    uint32_t convInputIndexes[] = {inputIndex, convWeightsIndex, convBiasesIndex};
+    uint32_t convOutputIndexes[] = {currentOperandIndex};
+    status = ANeuralNetworksModel_addOperation(model, ANEURALNETWORKS_CONV_2D, 3, convInputIndexes, 1, convOutputIndexes);
+    if (status != ANEURALNETWORKS_NO_ERROR) {
+        LOGE("Error adding convolution operation: %d", status);
+        ANeuralNetworksModel_free(model);
+        return;
+    }
+    LOGD("Convolution operation added to the model");
+//    currentOperandIndex++;
+
     // Add the ReLU layer operand
     ANeuralNetworksOperandType reluOutputType = convOutputType;
     status = ANeuralNetworksModel_addOperand(model, &reluOutputType);
@@ -100,7 +121,20 @@ void classify_images(JNIEnv* env, jobject imageData) {
         ANeuralNetworksModel_free(model);
         return;
     }
+    uint32_t reluOutputIndex = currentOperandIndex++;
+    LOGD("latest operand index: %d", reluOutputIndex);
     LOGD("ReLU layer operand added to the model");
+
+    // Add the ReLU operation
+    uint32_t reluInputIndexes[] = {convOutputIndexes[0]};
+    uint32_t reluOutputIndexes[] = {reluOutputIndex};
+    status = ANeuralNetworksModel_addOperation(model, ANEURALNETWORKS_RELU, 1, reluInputIndexes, 1, reluOutputIndexes);
+    if (status != ANEURALNETWORKS_NO_ERROR) {
+        LOGE("Error adding ReLU operation: %d", status);
+        ANeuralNetworksModel_free(model);
+        return;
+    }
+    LOGD("ReLU operation added to the model");
 
 
     // Add the max pooling layer operand
@@ -118,8 +152,20 @@ void classify_images(JNIEnv* env, jobject imageData) {
         ANeuralNetworksModel_free(model);
         return;
     }
+    uint32_t poolOutputIndex = currentOperandIndex++;
+    LOGD("latest operand index: %d", poolOutputIndex);
     LOGD("Max pooling layer operand added to the model");
 
+    // Add the max pooling operation
+    uint32_t poolInputIndexes[] = {reluOutputIndex};
+    uint32_t poolOutputIndexes[] = {poolOutputIndex};
+    status = ANeuralNetworksModel_addOperation(model, ANEURALNETWORKS_MAX_POOL_2D, 1, poolInputIndexes, 1, poolOutputIndexes);
+    if (status != ANEURALNETWORKS_NO_ERROR) {
+        LOGE("Error adding max pooling operation: %d", status);
+        ANeuralNetworksModel_free(model);
+        return;
+    }
+    LOGD("Max pooling operation added to the model");
 
     // Add the fully connected layer operands
     const uint32_t fcWeightsDimensions[] = {FC_SIZE, (IMAGE_SIZE - CONV_KERNEL_SIZE + 1) / POOL_SIZE * (IMAGE_SIZE - CONV_KERNEL_SIZE + 1) / POOL_SIZE * CONV_FILTERS};
@@ -136,6 +182,8 @@ void classify_images(JNIEnv* env, jobject imageData) {
         ANeuralNetworksModel_free(model);
         return;
     }
+    uint32_t fcWeightsIndex = currentOperandIndex++;
+    LOGD("latest operand index: %d", fcWeightsIndex);
     LOGD("Fully connected weights operand added to the model");
 
     const uint32_t fcBiasesDimensions[] = {FC_SIZE};
@@ -152,6 +200,8 @@ void classify_images(JNIEnv* env, jobject imageData) {
         ANeuralNetworksModel_free(model);
         return;
     }
+    uint32_t fcBiasesIndex = currentOperandIndex++;
+    LOGD("latest operand index: %d", fcBiasesIndex);
     LOGD("Fully connected biases operand added to the model");
 
     const uint32_t fcOutputDimensions[] = {1, FC_SIZE};
@@ -168,7 +218,20 @@ void classify_images(JNIEnv* env, jobject imageData) {
         ANeuralNetworksModel_free(model);
         return;
     }
+    uint32_t fcOutputIndex = currentOperandIndex++;
+    LOGD("latest operand index: %d", fcOutputIndex);
     LOGD("Fully connected output operand added to the model");
+
+    // Add the fully connected operation
+    uint32_t fcInputIndexes[] = {poolOutputIndex, fcWeightsIndex, fcBiasesIndex};
+    uint32_t fcOutputIndexes[] = {fcOutputIndex};
+    status = ANeuralNetworksModel_addOperation(model, ANEURALNETWORKS_FULLY_CONNECTED, 3, fcInputIndexes, 1, fcOutputIndexes);
+    if (status != ANEURALNETWORKS_NO_ERROR) {
+        LOGE("Error adding fully connected operation: %d", status);
+        ANeuralNetworksModel_free(model);
+        return;
+    }
+    LOGD("Fully connected operation added to the model");
 
     // Add the softmax layer operand
     const uint32_t softmaxOutputDimensions[] = {1, NUM_CLASSES};
@@ -179,18 +242,41 @@ void classify_images(JNIEnv* env, jobject imageData) {
             .scale = 0.0f,
             .zeroPoint = 0
     };
+    uint32_t softmaxOutputIndex;
+
     status = ANeuralNetworksModel_addOperand(model, &softmaxOutputType);
     if (status != ANEURALNETWORKS_NO_ERROR) {
         LOGE("Error adding softmax layer operand: %d", status);
         ANeuralNetworksModel_free(model);
         return;
     }
+    softmaxOutputIndex = currentOperandIndex++;
+    LOGD("latest operand index: %d", softmaxOutputIndex);
     LOGD("Softmax layer operand added to the model");
 
+    // Add the softmax operation
+    uint32_t softmaxInputIndexes[] = {fcOutputIndex};
+    uint32_t softmaxOutputIndexes[] = {softmaxOutputIndex};
+    status = ANeuralNetworksModel_addOperation(model, ANEURALNETWORKS_SOFTMAX, 1, softmaxInputIndexes, 1, softmaxOutputIndexes);
+    if (status != ANEURALNETWORKS_NO_ERROR) {
+        LOGE("Error adding softmax operation: %d", status);
+        ANeuralNetworksModel_free(model);
+        return;
+    }
+    LOGD("Softmax operation added to the model");
+
+    // Validate operand indices before identifyInputsAndOutputs call
+    if (inputIndex >= currentOperandIndex || softmaxOutputIndex >= currentOperandIndex) {
+        LOGE("Invalid operand indices");
+        ANeuralNetworksModel_free(model);
+        return;
+    }
+
     // Identify the input and output tensors
-    uint32_t inputIndex, softmaxOutputIndex;
+    const uint32_t inputIndices[] = {inputIndex};
+    const uint32_t outputIndices[] = {softmaxOutputIndex};
     status = ANeuralNetworksModel_identifyInputsAndOutputs(
-            model, 1, &inputIndex, 1, &softmaxOutputIndex);
+            model, 1, inputIndices, 1, outputIndices);
     if (status != ANEURALNETWORKS_NO_ERROR) {
         LOGE("Error identifying input and output tensors: %d", status);
         ANeuralNetworksModel_free(model);
@@ -239,18 +325,24 @@ void classify_images(JNIEnv* env, jobject imageData) {
     LOGD("NNAPI execution instance created");
 
     // Set the input tensor data
-    jint* inputTensorData = env->GetIntArrayElements(static_cast<jintArray>(imageData), nullptr);
-    status = ANeuralNetworksExecution_setInput(execution, 0, nullptr, inputTensorData, sizeof(float) * IMAGE_SIZE * IMAGE_SIZE * NUM_CHANNELS);
+    jint* inputTensorData = env->GetIntArrayElements(inputTensor, nullptr);
+    // Convert the input tensor from int to float
+    float inputTensorFloat[IMAGE_SIZE * IMAGE_SIZE * NUM_CHANNELS];
+    for (int i = 0; i < IMAGE_SIZE * IMAGE_SIZE * NUM_CHANNELS; i++) {
+        inputTensorFloat[i] = static_cast<float>(inputTensorData[i]);
+    }
+
+    status = ANeuralNetworksExecution_setInput(execution, inputIndex, nullptr, inputTensorData, sizeof(float) * IMAGE_SIZE * IMAGE_SIZE * NUM_CHANNELS);
     if (status != ANEURALNETWORKS_NO_ERROR) {
         LOGE("Error setting input tensor data: %d", status);
-        env->ReleaseIntArrayElements(static_cast<jintArray>(imageData), inputTensorData, 0);
+        env->ReleaseIntArrayElements(inputTensor, inputTensorData, 0);
         ANeuralNetworksExecution_free(execution);
         ANeuralNetworksCompilation_free(compilation);
         ANeuralNetworksModel_free(model);
         return;
     }
     LOGD("Input tensor data set");
-    env->ReleaseIntArrayElements(static_cast<jintArray>(imageData), inputTensorData, 0);
+    env->ReleaseIntArrayElements(inputTensor, inputTensorData, 0);
 
     // Compute the output
     status = ANeuralNetworksExecution_compute(execution);
@@ -266,7 +358,7 @@ void classify_images(JNIEnv* env, jobject imageData) {
     // Retrieve the output tensor data
     uint32_t outputDimensions[4];
     uint32_t outputRank;
-    status = ANeuralNetworksExecution_getOutputOperandDimensions(execution, 0, outputDimensions);
+    status = ANeuralNetworksExecution_getOutputOperandDimensions(execution, softmaxOutputIndex, outputDimensions);
     if (status != ANEURALNETWORKS_NO_ERROR) {
         LOGE("Error getting output tensor dimensions: %d", status);
         ANeuralNetworksExecution_free(execution);
@@ -276,7 +368,7 @@ void classify_images(JNIEnv* env, jobject imageData) {
     }
     LOGD("Output tensor dimensions retrieved");
 
-    status = ANeuralNetworksExecution_getOutputOperandRank(execution, 0, &outputRank);
+    status = ANeuralNetworksExecution_getOutputOperandRank(execution, softmaxOutputIndex, &outputRank);
     if (status != ANEURALNETWORKS_NO_ERROR) {
         LOGE("Error getting output tensor rank: %d", status);
         ANeuralNetworksExecution_free(execution);
@@ -294,7 +386,7 @@ void classify_images(JNIEnv* env, jobject imageData) {
     float* softmaxOutputData = new float[outputSize / sizeof(float)];
 
     // Set the output tensor data
-    status = ANeuralNetworksExecution_setOutput(execution, 0, nullptr, softmaxOutputData, outputSize);
+    status = ANeuralNetworksExecution_setOutput(execution, softmaxOutputIndex, nullptr, softmaxOutputData, outputSize);
     if (status != ANEURALNETWORKS_NO_ERROR) {
         LOGE("Error setting output tensor data: %d", status);
         delete[] softmaxOutputData;

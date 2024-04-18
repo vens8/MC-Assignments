@@ -8,4 +8,4 @@
 #include <android/NeuralNetworks.h>
 #include <android/NeuralNetworksTypes.h>
 
-void classify_images(JNIEnv* env, jobject imageData);
+void classify_images(JNIEnv* env, jintArray inputTensor);
