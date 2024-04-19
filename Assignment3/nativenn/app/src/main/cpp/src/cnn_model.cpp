@@ -112,28 +112,28 @@ void classify_images(JNIEnv* env, jintArray inputTensor) {
 
     // Add operands for the newly defined integers
     status = ANeuralNetworksModel_addOperand(model, &int32OperandType); // padding_left
-    uint32_t padding_left_index = currentOperandIndex++;
+    uint32_t paddingLeftIndex = currentOperandIndex++;
     status = ANeuralNetworksModel_addOperand(model, &int32OperandType); // padding_right
-    uint32_t padding_right_index = currentOperandIndex++;
+    uint32_t paddingRightIndex = currentOperandIndex++;
     status = ANeuralNetworksModel_addOperand(model, &int32OperandType); // padding_top
-    uint32_t padding_top_index = currentOperandIndex++;
+    uint32_t paddingTopIndex = currentOperandIndex++;
     status = ANeuralNetworksModel_addOperand(model, &int32OperandType); // padding_bottom
-    uint32_t padding_bottom_index = currentOperandIndex++;
+    uint32_t paddingBottomIndex = currentOperandIndex++;
     status = ANeuralNetworksModel_addOperand(model, &int32OperandType); // stride_width
-    uint32_t stride_width_index = currentOperandIndex++;
+    uint32_t strideWidthIndex = currentOperandIndex++;
     status = ANeuralNetworksModel_addOperand(model, &int32OperandType); // stride_height
-    uint32_t stride_height_index = currentOperandIndex++;
+    uint32_t strideHeightIndex = currentOperandIndex++;
     status = ANeuralNetworksModel_addOperand(model, &int32OperandType); // activation
-    uint32_t activation_index = currentOperandIndex++;
+    uint32_t activationIndex = currentOperandIndex++;
 
     // Set operand values for the added operands
-    status = ANeuralNetworksModel_setOperandValue(model, padding_left_index, &padding_left, sizeof(padding_left));
-    status = ANeuralNetworksModel_setOperandValue(model, padding_right_index, &padding_right, sizeof(padding_right));
-    status = ANeuralNetworksModel_setOperandValue(model, padding_top_index, &padding_top, sizeof(padding_top));
-    status = ANeuralNetworksModel_setOperandValue(model, padding_bottom_index, &padding_bottom, sizeof(padding_bottom));
-    status = ANeuralNetworksModel_setOperandValue(model, stride_width_index, &stride_width, sizeof(stride_width));
-    status = ANeuralNetworksModel_setOperandValue(model, stride_height_index, &stride_height, sizeof(stride_height));
-    status = ANeuralNetworksModel_setOperandValue(model, activation_index, &activation, sizeof(activation));
+    status = ANeuralNetworksModel_setOperandValue(model, paddingLeftIndex, &padding_left, sizeof(padding_left));
+    status = ANeuralNetworksModel_setOperandValue(model, paddingRightIndex, &padding_right, sizeof(padding_right));
+    status = ANeuralNetworksModel_setOperandValue(model, paddingTopIndex, &padding_top, sizeof(padding_top));
+    status = ANeuralNetworksModel_setOperandValue(model, paddingBottomIndex, &padding_bottom, sizeof(padding_bottom));
+    status = ANeuralNetworksModel_setOperandValue(model, strideWidthIndex, &stride_width, sizeof(stride_width));
+    status = ANeuralNetworksModel_setOperandValue(model, strideHeightIndex, &stride_height, sizeof(stride_height));
+    status = ANeuralNetworksModel_setOperandValue(model, activationIndex, &activation, sizeof(activation));
 
 
     const uint32_t convOutputDimensions[] = {1, IMAGE_SIZE - CONV_KERNEL_SIZE + 1, IMAGE_SIZE - CONV_KERNEL_SIZE + 1, CONV_FILTERS};
@@ -156,9 +156,9 @@ void classify_images(JNIEnv* env, jintArray inputTensor) {
 
     // Add the convolution operation
     std::vector<uint32_t> convInputIndexes = {inputIndex, convWeightsIndex, convBiasesIndex,
-                                              padding_left_index, padding_right_index,
-                                              padding_top_index, padding_bottom_index,
-                                              stride_width_index, stride_height_index, activation_index};
+                                              paddingLeftIndex, paddingRightIndex,
+                                              paddingTopIndex, paddingBottomIndex,
+                                              strideWidthIndex, strideHeightIndex, activationIndex};
     uint32_t convOutputIndexes[] = {convOutputIndex};
     status = ANeuralNetworksModel_addOperation(model, ANEURALNETWORKS_CONV_2D, convInputIndexes.size(), convInputIndexes.data(), 1, convOutputIndexes);
     if (status != ANEURALNETWORKS_NO_ERROR) {
@@ -192,6 +192,16 @@ void classify_images(JNIEnv* env, jintArray inputTensor) {
     }
     LOGD("ReLU operation added to the model");
 
+    const int32_t poolFilterWidth = 2;
+    const int32_t poolFilterHeight = 2;
+    ANeuralNetworksModel_addOperand(model, &int32OperandType); // Filter width
+    uint32_t poolFilterWidthIndex = currentOperandIndex++;
+    ANeuralNetworksModel_setOperandValue(model, poolFilterWidthIndex, &poolFilterWidth, sizeof(poolFilterWidth));
+
+    ANeuralNetworksModel_addOperand(model, &int32OperandType); // Filter height
+    uint32_t poolFilterHeightIndex = currentOperandIndex++;
+    ANeuralNetworksModel_setOperandValue(model, poolFilterHeightIndex, &poolFilterHeight, sizeof(poolFilterHeight));
+
 
     // Add the max pooling layer operand
     const uint32_t poolOutputDimensions[] = {1, (IMAGE_SIZE - CONV_KERNEL_SIZE + 1) / POOL_SIZE, (IMAGE_SIZE - CONV_KERNEL_SIZE + 1) / POOL_SIZE, CONV_FILTERS};
@@ -213,9 +223,13 @@ void classify_images(JNIEnv* env, jintArray inputTensor) {
     LOGD("Max pooling layer operand added to the model");
 
     // Add the max pooling operation
-    uint32_t poolInputIndexes[] = {reluOutputIndex};
+    std::vector<uint32_t> poolInputIndexes = {reluOutputIndex,  // Assuming this is the input tensor from previous layers
+                                   paddingLeftIndex, paddingRightIndex, paddingTopIndex, paddingBottomIndex,  // Reused or newly defined
+                                   strideWidthIndex, strideHeightIndex,  // Reused or newly defined
+                                   poolFilterWidthIndex, poolFilterHeightIndex,  // Newly defined above
+                                   activationIndex};
     uint32_t poolOutputIndexes[] = {poolOutputIndex};
-    status = ANeuralNetworksModel_addOperation(model, ANEURALNETWORKS_MAX_POOL_2D, 1, poolInputIndexes, 1, poolOutputIndexes);
+    status = ANeuralNetworksModel_addOperation(model, ANEURALNETWORKS_MAX_POOL_2D, poolInputIndexes.size(), poolInputIndexes.data(), 1, poolOutputIndexes);
     if (status != ANEURALNETWORKS_NO_ERROR) {
         LOGE("Error adding max pooling operation: %d", status);
         ANeuralNetworksModel_free(model);
@@ -279,15 +293,41 @@ void classify_images(JNIEnv* env, jintArray inputTensor) {
     LOGD("Fully connected output operand added to the model");
 
     // Add the fully connected operation
-    uint32_t fcInputIndexes[] = {poolOutputIndex, fcWeightsIndex, fcBiasesIndex};
+    std::vector<uint32_t> fcInputIndexes = {poolOutputIndex, fcWeightsIndex, fcBiasesIndex, activationIndex};
     uint32_t fcOutputIndexes[] = {fcOutputIndex};
-    status = ANeuralNetworksModel_addOperation(model, ANEURALNETWORKS_FULLY_CONNECTED, 3, fcInputIndexes, 1, fcOutputIndexes);
+    status = ANeuralNetworksModel_addOperation(model, ANEURALNETWORKS_FULLY_CONNECTED, fcInputIndexes.size(), fcInputIndexes.data(), 1, fcOutputIndexes);
     if (status != ANEURALNETWORKS_NO_ERROR) {
         LOGE("Error adding fully connected operation: %d", status);
         ANeuralNetworksModel_free(model);
         return;
     }
     LOGD("Fully connected operation added to the model");
+
+    ANeuralNetworksOperandType float32ScalarType = {
+            .type = ANEURALNETWORKS_FLOAT32,
+            .dimensionCount = 0, // Scalars have 0 dimensions
+            .dimensions = nullptr,
+            .scale = 0.0f, // Not used
+            .zeroPoint = 0 // Not used
+    };
+
+    // Add the softmax beta operand (typically 1.0 for softmax)
+    const float softmaxBeta = 1.0f;
+    status = ANeuralNetworksModel_addOperand(model, &float32ScalarType);
+    if (status != ANEURALNETWORKS_NO_ERROR) {
+        LOGE("Error adding softmax beta operand: %d", status);
+        ANeuralNetworksModel_free(model);
+        return;
+    }
+    uint32_t softmaxBetaIndex = currentOperandIndex++;
+    status = ANeuralNetworksModel_setOperandValue(model, softmaxBetaIndex, &softmaxBeta, sizeof(softmaxBeta));
+    if (status != ANEURALNETWORKS_NO_ERROR) {
+        LOGE("Error setting softmax beta operand value: %d", status);
+        ANeuralNetworksModel_free(model);
+        return;
+    }
+
+    LOGD("Softmax beta operand added to the model");
 
     // Add the softmax layer operand
     const uint32_t softmaxOutputDimensions[] = {1, NUM_CLASSES};
@@ -311,9 +351,9 @@ void classify_images(JNIEnv* env, jintArray inputTensor) {
     LOGD("Softmax layer operand added to the model");
 
     // Add the softmax operation
-    uint32_t softmaxInputIndexes[] = {fcOutputIndex};
+    std::vector<uint32_t> softmaxInputIndexes = {fcOutputIndex, softmaxBetaIndex};
     uint32_t softmaxOutputIndexes[] = {softmaxOutputIndex};
-    status = ANeuralNetworksModel_addOperation(model, ANEURALNETWORKS_SOFTMAX, 1, softmaxInputIndexes, 1, softmaxOutputIndexes);
+    status = ANeuralNetworksModel_addOperation(model, ANEURALNETWORKS_SOFTMAX, softmaxInputIndexes.size(), softmaxInputIndexes.data(), 1, softmaxOutputIndexes);
     if (status != ANEURALNETWORKS_NO_ERROR) {
         LOGE("Error adding softmax operation: %d", status);
         ANeuralNetworksModel_free(model);
