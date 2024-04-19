@@ -4,6 +4,7 @@
 
 #include "../include/cnn_model.h"
 #include <android/log.h>
+#include <vector>
 
 #define LOG_TAG "NativeNNModel"
 #define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
@@ -91,6 +92,50 @@ void classify_images(JNIEnv* env, jintArray inputTensor) {
     LOGD("latest operand index: %d", convBiasesIndex);
     LOGD("Convolution biases operand added to the model");
 
+    // Define padding, stride, and activation integers
+    const int32_t padding_left = 0;
+    const int32_t padding_right = 0;
+    const int32_t padding_top = 0;
+    const int32_t padding_bottom = 0;
+    const int32_t stride_width = 1;
+    const int32_t stride_height = 1;
+    const int32_t activation = ANEURALNETWORKS_FUSED_NONE;
+
+    ANeuralNetworksOperandType int32OperandType{
+            .type = ANEURALNETWORKS_INT32,
+            .dimensionCount = 0, // Scalars have no dimensions
+            .dimensions = nullptr,
+            .scale = 0.0f, // Not used for int32 type
+            .zeroPoint = 0, // Not used for int32 type
+    };
+
+
+    // Add operands for the newly defined integers
+    status = ANeuralNetworksModel_addOperand(model, &int32OperandType); // padding_left
+    uint32_t padding_left_index = currentOperandIndex++;
+    status = ANeuralNetworksModel_addOperand(model, &int32OperandType); // padding_right
+    uint32_t padding_right_index = currentOperandIndex++;
+    status = ANeuralNetworksModel_addOperand(model, &int32OperandType); // padding_top
+    uint32_t padding_top_index = currentOperandIndex++;
+    status = ANeuralNetworksModel_addOperand(model, &int32OperandType); // padding_bottom
+    uint32_t padding_bottom_index = currentOperandIndex++;
+    status = ANeuralNetworksModel_addOperand(model, &int32OperandType); // stride_width
+    uint32_t stride_width_index = currentOperandIndex++;
+    status = ANeuralNetworksModel_addOperand(model, &int32OperandType); // stride_height
+    uint32_t stride_height_index = currentOperandIndex++;
+    status = ANeuralNetworksModel_addOperand(model, &int32OperandType); // activation
+    uint32_t activation_index = currentOperandIndex++;
+
+    // Set operand values for the added operands
+    status = ANeuralNetworksModel_setOperandValue(model, padding_left_index, &padding_left, sizeof(padding_left));
+    status = ANeuralNetworksModel_setOperandValue(model, padding_right_index, &padding_right, sizeof(padding_right));
+    status = ANeuralNetworksModel_setOperandValue(model, padding_top_index, &padding_top, sizeof(padding_top));
+    status = ANeuralNetworksModel_setOperandValue(model, padding_bottom_index, &padding_bottom, sizeof(padding_bottom));
+    status = ANeuralNetworksModel_setOperandValue(model, stride_width_index, &stride_width, sizeof(stride_width));
+    status = ANeuralNetworksModel_setOperandValue(model, stride_height_index, &stride_height, sizeof(stride_height));
+    status = ANeuralNetworksModel_setOperandValue(model, activation_index, &activation, sizeof(activation));
+
+
     const uint32_t convOutputDimensions[] = {1, IMAGE_SIZE - CONV_KERNEL_SIZE + 1, IMAGE_SIZE - CONV_KERNEL_SIZE + 1, CONV_FILTERS};
     ANeuralNetworksOperandType convOutputType = {
             .type = ANEURALNETWORKS_TENSOR_FLOAT32,
@@ -99,12 +144,23 @@ void classify_images(JNIEnv* env, jintArray inputTensor) {
             .scale = 0.0f,
             .zeroPoint = 0
     };
+    status = ANeuralNetworksModel_addOperand(model, &convOutputType);
+    if (status != ANEURALNETWORKS_NO_ERROR) {
+        LOGE("Error adding convolution output type operand: %d", status);
+        ANeuralNetworksModel_free(model);
+        return;
+    }
+    uint32_t convOutputIndex = currentOperandIndex++;
+    LOGD("latest operand index: %d", convOutputIndex);
     LOGD("Convolution output operand created");
 
     // Add the convolution operation
-    uint32_t convInputIndexes[] = {inputIndex, convWeightsIndex, convBiasesIndex};
-    uint32_t convOutputIndexes[] = {currentOperandIndex};
-    status = ANeuralNetworksModel_addOperation(model, ANEURALNETWORKS_CONV_2D, 3, convInputIndexes, 1, convOutputIndexes);
+    std::vector<uint32_t> convInputIndexes = {inputIndex, convWeightsIndex, convBiasesIndex,
+                                              padding_left_index, padding_right_index,
+                                              padding_top_index, padding_bottom_index,
+                                              stride_width_index, stride_height_index, activation_index};
+    uint32_t convOutputIndexes[] = {convOutputIndex};
+    status = ANeuralNetworksModel_addOperation(model, ANEURALNETWORKS_CONV_2D, convInputIndexes.size(), convInputIndexes.data(), 1, convOutputIndexes);
     if (status != ANEURALNETWORKS_NO_ERROR) {
         LOGE("Error adding convolution operation: %d", status);
         ANeuralNetworksModel_free(model);
