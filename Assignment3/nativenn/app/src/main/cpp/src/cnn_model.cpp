@@ -37,7 +37,7 @@ void classify_images(JNIEnv* env, jintArray inputTensor) {
 
 
     // Add the input operand
-    const uint32_t inputDimensions[] = {1, NUM_CHANNELS, IMAGE_SIZE, IMAGE_SIZE};
+    const uint32_t inputDimensions[] = {1, IMAGE_SIZE, IMAGE_SIZE, NUM_CHANNELS};
     ANeuralNetworksOperandType inputType = {
             .type = ANEURALNETWORKS_TENSOR_FLOAT32,
             .dimensionCount = 4,
@@ -136,8 +136,7 @@ void classify_images(JNIEnv* env, jintArray inputTensor) {
     status = ANeuralNetworksModel_setOperandValue(model, activationIndex, &activation, sizeof(activation));
 
 
-    const uint32_t convOutputDimensions[] = {1, IMAGE_SIZE, IMAGE_SIZE, CONV_FILTERS};
-//    const uint32_t convOutputDimensions[] = {1, IMAGE_SIZE - CONV_KERNEL_SIZE + 1, IMAGE_SIZE - CONV_KERNEL_SIZE + 1, CONV_FILTERS};
+    const uint32_t convOutputDimensions[] = {1, IMAGE_SIZE - CONV_KERNEL_SIZE + 1, IMAGE_SIZE - CONV_KERNEL_SIZE + 1, CONV_FILTERS};
     ANeuralNetworksOperandType convOutputType = {
             .type = ANEURALNETWORKS_TENSOR_FLOAT32,
             .dimensionCount = 4,
@@ -205,8 +204,7 @@ void classify_images(JNIEnv* env, jintArray inputTensor) {
 
 
     // Add the max pooling layer operand
-    const uint32_t poolOutputDimensions[] = {1, IMAGE_SIZE / POOL_SIZE, IMAGE_SIZE / POOL_SIZE, CONV_FILTERS};
-//    const uint32_t poolOutputDimensions[] = {1, (IMAGE_SIZE - CONV_KERNEL_SIZE + 1) / POOL_SIZE, (IMAGE_SIZE - CONV_KERNEL_SIZE + 1) / POOL_SIZE, CONV_FILTERS};
+    const uint32_t poolOutputDimensions[] = {1, (IMAGE_SIZE - CONV_KERNEL_SIZE + 1) / POOL_SIZE, (IMAGE_SIZE - CONV_KERNEL_SIZE + 1) / POOL_SIZE, CONV_FILTERS};
     ANeuralNetworksOperandType poolOutputType = {
             .type = ANEURALNETWORKS_TENSOR_FLOAT32,
             .dimensionCount = 4,
@@ -226,10 +224,10 @@ void classify_images(JNIEnv* env, jintArray inputTensor) {
 
     // Add the max pooling operation
     std::vector<uint32_t> poolInputIndexes = {reluOutputIndex,  // Assuming this is the input tensor from previous layers
-                                   paddingLeftIndex, paddingRightIndex, paddingTopIndex, paddingBottomIndex,  // Reused or newly defined
-                                   strideWidthIndex, strideHeightIndex,  // Reused or newly defined
-                                   poolFilterWidthIndex, poolFilterHeightIndex,  // Newly defined above
-                                   activationIndex};
+                                              paddingLeftIndex, paddingRightIndex, paddingTopIndex, paddingBottomIndex,  // Reused or newly defined
+                                              strideWidthIndex, strideHeightIndex,  // Reused or newly defined
+                                              poolFilterWidthIndex, poolFilterHeightIndex,  // Newly defined above
+                                              activationIndex};
     uint32_t poolOutputIndexes[] = {poolOutputIndex};
     status = ANeuralNetworksModel_addOperation(model, ANEURALNETWORKS_MAX_POOL_2D, poolInputIndexes.size(), poolInputIndexes.data(), 1, poolOutputIndexes);
     if (status != ANEURALNETWORKS_NO_ERROR) {
