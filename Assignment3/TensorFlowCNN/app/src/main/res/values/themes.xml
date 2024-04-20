@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.MySplashScreen" parent="Theme.Tensorflowcnn">
+        <item name="windowSplashScreenBackground">@color/gray</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/tensorflowcnn_medium</item>
+        <item name="windowSplashScreenAnimationDuration">1000</item>
+        <item name="postSplashScreenTheme">@style/Theme.Tensorflowcnn</item>
+    </style>
+
+    <style name="Theme.Tensorflowcnn" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>
