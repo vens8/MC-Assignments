@@ -6,9 +6,14 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.lifecycleScope
 import com.example.axelero.repository.OrientationDataRepository
 import com.example.axelero.ui.HistoryContent
+import com.example.axelero.ui.theme.AxeleroTheme
 import kotlinx.coroutines.launch
 
 class HistoryActivity : ComponentActivity() {
@@ -32,7 +37,15 @@ class HistoryActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         Log.d("HistoryActivity: orientationDataRepository", orientationDataRepository.toString())
         setContent {
-            HistoryContent(orientationDataRepository, createDocumentResult)
+            AxeleroTheme {
+                // A surface container using the 'background' color from the theme
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    HistoryContent(orientationDataRepository, createDocumentResult)
+                }
+            }
         }
     }
 
