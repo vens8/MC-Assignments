@@ -2,11 +2,15 @@ package com.example.axelero.ui.components
 
 import android.hardware.SensorManager
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -21,6 +25,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.axelero.repository.OrientationDataRepository
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SensorDelayDropdownMenu(
     orientationDataRepository: OrientationDataRepository,
@@ -38,14 +43,23 @@ fun SensorDelayDropdownMenu(
     Box(modifier = Modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = items[selectedInterval].toString(),
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable(onClick = { expanded = true })
                 .padding(horizontal = 16.dp),
-            textAlign = TextAlign.Center
-        )
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = items[selectedInterval].toString(),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.weight(1f)
+            )
+            ExposedDropdownMenuDefaults.TrailingIcon(
+                expanded = expanded
+            )
+        }
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
@@ -55,7 +69,7 @@ fun SensorDelayDropdownMenu(
                 DropdownMenuItem(
                     {
                         Text(text = label,
-                            modifier = Modifier.fillMaxWidth(), // Make sure text is able to fill the menu width
+                            modifier = Modifier.fillMaxWidth(),
                             textAlign = TextAlign.Center // Center text
                         )
                     },

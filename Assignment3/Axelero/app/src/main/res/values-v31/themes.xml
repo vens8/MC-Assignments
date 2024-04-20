@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <style name="Theme.MySplashScreen" parent="Theme.Axelero">
-        <item name="windowSplashScreenBackground">@color/gray</item>
+        <item name="android:windowSplashScreenBackground">@color/gray</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/axeleroicon_small</item>
         <item name="windowSplashScreenAnimationDuration">1000</item>
         <item name="postSplashScreenTheme">@style/Theme.Axelero</item>
     </style>
-    <style name="Theme.Axelero" parent="android:Theme.Material.Light.NoActionBar" />
 </resources>
