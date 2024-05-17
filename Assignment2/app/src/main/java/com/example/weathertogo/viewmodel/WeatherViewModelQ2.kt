@@ -178,7 +178,6 @@ class WeatherViewModelQ2(context: Context) : ViewModel() {
     }
 
     private fun insertWeatherDataToDatabase(weatherInfo: WeatherInfo) {
-        // use viewModelScope here??
         viewModelScope.launch {
             try {
                 val weatherDataEntity = WeatherDataEntity(
