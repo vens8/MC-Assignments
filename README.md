@@ -18,21 +18,26 @@ Note: Each of these submissions received full marks.
     │   ├── nativenn/
 
 Each of these assignments has their own README files for more detailed structure and working. Please refer to them for better understanding.
-- Assignment1 (JourneyTrack) 
-    -
-    - [README File](https://github.com/vens8/MC-Assignments/tree/main/Assignment1/JourneyTrack)
-    - [Download Latest APK](https://github.com/vens8/MC-Assignments/releases/download/JourneyTrack/JourneyTrack-1.0.1.apk)
-- Assignment2 (WeatherToGo)
-    -
-    - [README File](https://github.com/vens8/MC-Assignments/tree/main/Assignment2#readme)
-    - [Download Latest APK](https://github.com/vens8/MC-Assignments/releases/download/WeatherToGo/WeatherToGo-1.0.2.apk)
-- Assignment3
-    -
-    - [README File](https://github.com/vens8/MC-Assignments/tree/main/Assignment2#readme)
-    - **Q1: Axelero**
-        - [Download Latest APK](https://github.com/vens8/MC-Assignments/releases/download/Axelero/Axelero-1.0.0.apk)
-    - **Q2: TensorFlowLite CNN**
-        - [Download Latest APK](https://github.com/vens8/MC-Assignments/releases/download/TensorFlowCNN/TensorFlowCNN-1.0.0.apk)
+
+## Assignment1 (JourneyTrack) 
+- [README File](https://github.com/vens8/MC-Assignments/tree/main/Assignment1/JourneyTrack)
+- [Download Latest APK](https://github.com/vens8/MC-Assignments/releases/download/JourneyTrack/JourneyTrack-1.0.1.apk)
+
+### JourneyTrack Demo
+[JourneyTrack Demo Video](https://github.com/vens8/MC-Assignments/assets/55199947/f895aa2e-9634-4970-ba65-afb77fcb164d)
+
+
+## Assignment2 (WeatherToGo)
+- [README File](https://github.com/vens8/MC-Assignments/tree/main/Assignment2#readme)
+- [Download Latest APK](https://github.com/vens8/MC-Assignments/releases/download/WeatherToGo/WeatherToGo-1.0.2.apk)
+
+## Assignment3
+### **Q1: Axelero**
+- [README File](https://github.com/vens8/MC-Assignments/tree/main/Assignment3/Axelero#readme)
+- [Download Latest APK](https://github.com/vens8/MC-Assignments/releases/download/Axelero/Axelero-1.0.0.apk)
+### **Q2: TensorFlowLite CNN**
+- [README File](https://github.com/vens8/MC-Assignments/tree/main/Assignment3/TensorFlowCNN#readme)
+- [Download Latest APK](https://github.com/vens8/MC-Assignments/releases/download/TensorFlowCNN/TensorFlowCNN-1.0.0.apk)
 
 
 ## 🔗 My Links
